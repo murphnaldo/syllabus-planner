@@ -65,7 +65,22 @@ assert.equal(findDuplicate("Quiz 3: Deep Learning Applications", "2026-10-02", n
 assert.equal(findDuplicate("Vote for Your Favorite Student App", "2026-09-25", null, existing2), null);
 assert.equal(findDuplicate("Assignment 2: Vibe Coding and Data Visualization", "2026-09-25", null, existing2), "Assignment 2");
 assert.equal(findDuplicate("Quiz 5: LLMs", "2026-10-23", null, existing2), "Quiz 5 LLMs");
-assert.equal(findDuplicate("Quiz 7: LLMs Evaluation", "2026-10-23", null, existing2), null);
+assert.equal(findDuplicate("Quiz 7: LLMs Evaluation", "2026-11-27", null, existing2), null);
 assert.equal(findDuplicate("Midterm 1", "2026-10-09", null, existing2), "Midterm");
+
+// Cases from the first real ISM 250 run
+const ism250 = [
+  { id: "a", name: "Assignment 2", start: "2026-09-25", end: null },
+  { id: "b", name: "Quiz 2 Machine Learning", start: "2026-09-25", end: null },
+  { id: "c", name: "Quiz 7 RAG", start: "2026-10-30", end: null },
+  { id: "d", name: "Assignment 4", start: "2026-10-30", end: null },
+  { id: "e", name: "Midterm", start: "2026-10-09", end: null },
+];
+assert.equal(findDuplicate("Mini Assignment: Vote for Your Favorite Student App", "2026-09-25", null, ism250), null);
+assert.equal(findDuplicate("Quiz 2: Machine Learning Basics", "2026-09-25", null, ism250), "Quiz 2 Machine Learning");
+assert.equal(findDuplicate("Quiz 6: RAG", "2026-10-30", null, ism250), "Quiz 7 RAG");
+assert.equal(findDuplicate("Assignment 4: Train a Simple Predictive Model", "2026-10-30", null, ism250), "Assignment 4");
+assert.equal(findDuplicate("Midterm Exam 1: MCQ and Vibe Coding/Data Analytics", "2026-10-09", null, ism250), "Midterm");
+assert.equal(findDuplicate("Final Exam", "2026-12-07", "2026-12-11", ism250), null);
 
 console.log("All checks passed");
