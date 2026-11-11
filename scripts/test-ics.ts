@@ -53,4 +53,19 @@ assert.equal(findDuplicate("Midterm 2", "2026-11-13", null, existing), "Midterm 
 assert.equal(findDuplicate("Assignment 4: Train a Simple Predictive Model", "2026-10-30", null, existing), "Assignment 4");
 assert.equal(findDuplicate("Assignment 5", "2026-11-06", null, existing), null);
 
+// Same date and same number, but different kinds of work: not duplicates
+const existing2 = [
+  { id: "3", name: "Assignment 2", start: "2026-09-25", end: null },
+  { id: "4", name: "Assignment 3", start: "2026-10-02", end: null },
+  { id: "5", name: "Quiz 5 LLMs", start: "2026-10-23", end: null },
+  { id: "6", name: "Midterm", start: "2026-10-05", end: "2026-10-09" },
+];
+assert.equal(findDuplicate("Quiz 2: Machine Learning Basics", "2026-09-25", null, existing2), null);
+assert.equal(findDuplicate("Quiz 3: Deep Learning Applications", "2026-10-02", null, existing2), null);
+assert.equal(findDuplicate("Vote for Your Favorite Student App", "2026-09-25", null, existing2), null);
+assert.equal(findDuplicate("Assignment 2: Vibe Coding and Data Visualization", "2026-09-25", null, existing2), "Assignment 2");
+assert.equal(findDuplicate("Quiz 5: LLMs", "2026-10-23", null, existing2), "Quiz 5 LLMs");
+assert.equal(findDuplicate("Quiz 7: LLMs Evaluation", "2026-10-23", null, existing2), null);
+assert.equal(findDuplicate("Midterm 1", "2026-10-09", null, existing2), "Midterm");
+
 console.log("All checks passed");

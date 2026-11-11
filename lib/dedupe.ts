@@ -12,10 +12,32 @@ export function tokens(s: string): Set<string> {
   );
 }
 
+const isNumber = (w: string) => /^\d+$/.test(w);
+
+// Words that describe a type of work. "Quiz 2" and "Assignment 2" share a number
+// but are different things, so these must agree when both names have one.
+const KIND_WORDS = ["quiz", "assignment", "homework", "hw", "exam", "midterm", "final", "project", "lab"];
+
 function similarity(a: string, b: string): number {
   const A = tokens(a);
   const B = tokens(b);
   if (A.size === 0 || B.size === 0) return 0;
+
+  // Need at least one shared real word; a shared number alone is not a match
+  let sharedWords = 0;
+  for (const w of A) if (B.has(w) && !isNumber(w)) sharedWords++;
+  if (sharedWords === 0) return 0;
+
+  // If both names state a kind of work, the kinds must overlap
+  const kindsA = KIND_WORDS.filter((k) => A.has(k));
+  const kindsB = KIND_WORDS.filter((k) => B.has(k));
+  if (kindsA.length && kindsB.length && !kindsA.some((k) => kindsB.includes(k))) return 0;
+
+  // If both names have numbers, they must share one ("Quiz 5" is not "Quiz 7")
+  const numsA = [...A].filter(isNumber);
+  const numsB = [...B].filter(isNumber);
+  if (numsA.length && numsB.length && !numsA.some((n) => numsB.includes(n))) return 0;
+
   let shared = 0;
   for (const w of A) if (B.has(w)) shared++;
   return shared / Math.min(A.size, B.size);
