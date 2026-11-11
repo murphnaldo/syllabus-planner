@@ -237,7 +237,7 @@ export default function Home() {
             onClick={extract}
             disabled={busy || !courseId || !semesterStart || !semesterEnd || (!file && !(useFeed && feedConfigured))}
           >
-            {busy ? "Reading the syllabus... (about 20 seconds)" : "Find assignments and exams"}
+            {busy ? "Reading the syllabus... (up to a minute for big courses)" : "Find assignments and exams"}
           </button>
         </>
       )}
