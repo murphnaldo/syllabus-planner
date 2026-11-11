@@ -38,12 +38,12 @@ npm test        # parser and duplicate-check tests
 
 Friends sign in with an invite code instead of the password. They type in their course, optionally paste their own Brightspace link (kept only in their browser), and download a `.ics` calendar file that imports into Google, Apple, or Outlook. They can't see or touch your Notion.
 
-Codes and usage live in the `syllabus-planner` Supabase project. Each code gets a number of runs per term (fall, spring, summer), and a run only counts when it succeeds.
+Codes and usage live in the `syllabus-planner` Supabase project. Each code gets 5 runs per term by default (fall, spring, summer; add run_limit to change it), and a run only counts when it succeeds.
 
 Add a code in the Supabase SQL editor:
 
 ```sql
-insert into invite_codes (code, name, run_limit) values ('JORDAN-7K2Q', 'Jordan', 10);
+insert into invite_codes (code, name) values ('JORDAN-7K2Q', 'Jordan');  -- 5 runs per term by default
 ```
 
 Turn one off: `update invite_codes set active = false where code = 'JORDAN-7K2Q';`
