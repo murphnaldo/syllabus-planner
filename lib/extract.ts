@@ -33,7 +33,7 @@ Follow the student's rules exactly:
 7. Use clear short names a student would write, like "Quiz 3: Deep Learning Applications", "Exam 1", "Homework 4".
 8. Dates are YYYY-MM-DD. Do not invent items or dates you cannot justify from the syllabus, the feed, or a stated rule.
 
-Return the result by calling the submit_items tool exactly once.`;
+Return the result by calling the submit_items tool exactly once. Do not reply with plain text.`;
 
 const TOOL = {
   name: "submit_items",
@@ -113,7 +113,8 @@ export async function extractItems(
       max_tokens: 8000,
       system: SYSTEM,
       tools: [TOOL],
-      tool_choice: { type: "tool", name: "submit_items" },
+      // Newer models only accept "auto" here; the prompt tells it to call the tool
+      tool_choice: { type: "auto" },
       messages: [{ role: "user", content }],
     }),
   });
@@ -122,15 +123,33 @@ export async function extractItems(
   if (!res.ok) {
     throw new Error(`AI request failed (${res.status}): ${data?.error?.message ?? "unknown error"}`);
   }
-  const call = (data.content ?? []).find((b: any) => b.type === "tool_use");
-  if (!call) throw new Error("The AI did not return a list of items.");
+  const blocks: any[] = data.content ?? [];
+  const call = blocks.find((b) => b.type === "tool_use" && b.name === "submit_items");
+  let payload: { items?: RawItem[]; warnings?: string[] } | null = call?.input ?? null;
 
-  const items: RawItem[] = (call.input.items ?? []).filter(
+  // Fallback: if the model answered in plain text, pull the JSON out of it
+  if (!payload) {
+    const text = blocks
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("\n");
+    const match = text.match(/\{[\s\S]*"items"[\s\S]*\}/);
+    if (match) {
+      try {
+        payload = JSON.parse(match[0]);
+      } catch {
+        payload = null;
+      }
+    }
+  }
+  if (!payload) throw new Error("The AI did not return a list of items. Try again.");
+
+  const items: RawItem[] = (payload.items ?? []).filter(
     (i: RawItem) => i && i.name && /^\d{4}-\d{2}-\d{2}$/.test(i.start)
   );
   return {
     items,
-    warnings: call.input.warnings ?? [],
+    warnings: payload.warnings ?? [],
     usage: { input: data.usage?.input_tokens ?? 0, output: data.usage?.output_tokens ?? 0 },
   };
 }
