@@ -103,3 +103,80 @@ assert.equal(findDuplicate("Pre-Class Assignment 3.2", "2026-09-17", null, acctN
 assert.equal(findDuplicate("Project 2: Great Adventures", "2026-11-02", null, acctNotion), "Project 2");
 
 console.log("All checks passed");
+
+// ---- Course picker: org unit IDs from Brightspace event links ----
+import { parseIcs as parseIcs2, feedCourses, NO_LABEL } from "../lib/ics.ts";
+const withLinks = [
+  "BEGIN:VCALENDAR",
+  "BEGIN:VEVENT",
+  "SUMMARY:Homework 6 - Due",
+  "DTSTART:20261019T193000Z",
+  "URL:https://brightspace.uakron.edu/d2l/le/calendar/5550001/event/123/detailsview",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "SUMMARY:Quiz 7 - Due",
+  "DTSTART:20261019T193000Z",
+  "DESCRIPTION:View event: https://brightspace.uakron.edu/d2l/home/5550001",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "SUMMARY:Post-Class Assignment 3 - Due",
+  "DTSTART:20260915T035900Z",
+  "LOCATION:Accounting Principles I 001",
+  "URL:https://brightspace.uakron.edu/d2l/le/calendar/4444444/event/9/detailsview",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "SUMMARY:Mystery event",
+  "DTSTART:20261001T120000Z",
+  "END:VEVENT",
+  "END:VCALENDAR",
+].join("\r\n");
+const ev2 = parseIcs2(withLinks);
+assert.equal(ev2[0].orgUnit, "5550001");
+assert.equal(ev2[1].orgUnit, "5550001");
+assert.equal(ev2[2].orgUnit, "4444444");
+const groups = feedCourses(ev2);
+assert.equal(groups[0].key, "5550001");
+assert.equal(groups[0].count, 2);
+assert.ok(groups.some((g) => g.key === NO_LABEL));
+const strict = filterForCourse(ev2, { name: "Whatever", code: "" }, "2026-08-24", "2026-12-13", "5550001");
+assert.equal(strict.matched.length, 2);
+
+// ---- Calendar export ----
+import { buildIcs } from "../lib/icsExport.ts";
+const ics = buildIcs(
+  [
+    { key: "a", name: "Final Exam", start: "2026-12-07", end: "2026-12-11", kind: "exam", source: "rule", note: "Week 16, exact day not given", duplicateOf: null, include: true },
+    { key: "b", name: "Homework 4, part 2; data", start: "2026-12-31", end: null, kind: "assignment", source: "syllabus", note: "", duplicateOf: null, include: true },
+  ],
+  "ISM 324",
+  new Date("2026-11-11T12:00:00Z")
+);
+assert.ok(ics.startsWith("BEGIN:VCALENDAR\r\n"));
+assert.ok(ics.includes("DTSTART;VALUE=DATE:20261207\r\nDTEND;VALUE=DATE:20261212"));
+assert.ok(ics.includes("DTSTART;VALUE=DATE:20261231\r\nDTEND;VALUE=DATE:20270101"), "end rolls into next year");
+assert.ok(ics.includes(String.raw`SUMMARY:ISM 324: Homework 4\, part 2\; data`), "commas and semicolons escaped");
+assert.equal(ics.match(/BEGIN:VEVENT/g)?.length, 2);
+assert.ok(ics.split("\r\n").every((l) => l.length <= 75), "lines folded");
+
+// ---- Signed sessions ----
+import { createSessionToken, readSession } from "../lib/auth.ts";
+process.env.APP_PASSWORD = "owner-pass";
+const tok = await createSessionToken({ role: "guest", code: "ABC123", name: "Jordan" });
+assert.deepEqual(await readSession(tok), { role: "guest", code: "ABC123", name: "Jordan" });
+const ownerTok = await createSessionToken({ role: "owner" });
+assert.deepEqual(await readSession(ownerTok), { role: "owner" });
+// Tampering: turn a guest token into owner without the signature
+const forged = Buffer.from(JSON.stringify({ role: "owner" })).toString("base64url") + "." + tok.split(".")[1];
+assert.equal(await readSession(forged), null);
+assert.equal(await readSession("garbage"), null);
+process.env.APP_PASSWORD = "changed";
+assert.equal(await readSession(ownerTok), null, "changing the password signs everyone out");
+
+// ---- Feed link validation ----
+import { isFeedUrl } from "../lib/feedUrl.ts";
+assert.equal(isFeedUrl("https://brightspace.uakron.edu/d2l/le/calendar/feed/user/feed.ics?token=abc"), true);
+assert.equal(isFeedUrl("http://brightspace.uakron.edu/d2l/le/calendar/feed/user/feed.ics"), false);
+assert.equal(isFeedUrl("https://evil.example.com/steal"), false);
+assert.equal(isFeedUrl("not a url"), false);
+
+console.log("All new checks passed");

@@ -1,6 +1,7 @@
 import type { FeedEvent } from "./types";
 
 const TZ = "America/New_York";
+export const NO_LABEL = "(no course label)";
 
 /** Undo RFC 5545 line folding and escaping. */
 function unfold(text: string): string[] {
@@ -40,43 +41,82 @@ export function icsDateToLocal(value: string, params: string): string | null {
   return `${y}-${mo}-${d}`;
 }
 
-export function parseIcs(text: string): FeedEvent[] {
-  const events: FeedEvent[] = [];
-  let current: Record<string, { value: string; params: string }> | null = null;
+type RawEvent = Record<string, { value: string; params: string }>;
 
+/** Brightspace links look like /d2l/le/calendar/4851232/... or ?ou=4851232 */
+export function findOrgUnit(ev: RawEvent): string {
+  for (const key of ["URL", "DESCRIPTION", "X-ALT-DESC", "UID", "LOCATION"]) {
+    const v = ev[key]?.value ?? "";
+    const m =
+      v.match(/\/d2l\/(?:le|lms|home)\/(?:[a-z]+\/)*?(\d{4,})(?:\/|\b)/i) ||
+      v.match(/[?&]ou=(\d{4,})/i) ||
+      v.match(/\/d2l\/home\/(\d{4,})/i);
+    if (m) return m[1];
+  }
+  return "";
+}
+
+export function parseIcsRaw(text: string): RawEvent[] {
+  const out: RawEvent[] = [];
+  let current: RawEvent | null = null;
   for (const line of unfold(text)) {
     if (line === "BEGIN:VEVENT") {
       current = {};
       continue;
     }
     if (line === "END:VEVENT") {
-      if (current) {
-        const dt = current.DTSTART ?? current.DTEND ?? current.DUE;
-        const date = dt ? icsDateToLocal(dt.value, dt.params) : null;
-        const summary = current.SUMMARY ? unescape(current.SUMMARY.value) : "";
-        if (date && summary) {
-          const course = unescape(current.LOCATION?.value ?? current["X-D2L-ORGUNIT"]?.value ?? "");
-          events.push({ summary, date, course });
-        }
-      }
+      if (current) out.push(current);
       current = null;
       continue;
     }
     if (!current) continue;
     const idx = line.indexOf(":");
     if (idx < 0) continue;
-    const head = line.slice(0, idx);
-    const value = line.slice(idx + 1);
-    const [name, ...rest] = head.split(";");
-    current[name.toUpperCase()] = { value, params: rest.join(";") };
+    const [name, ...rest] = line.slice(0, idx).split(";");
+    current[name.toUpperCase()] = { value: line.slice(idx + 1), params: rest.join(";") };
+  }
+  return out;
+}
+
+export function parseIcs(text: string): FeedEvent[] {
+  const events: FeedEvent[] = [];
+  for (const ev of parseIcsRaw(text)) {
+    const dt = ev.DTSTART ?? ev.DTEND ?? ev.DUE;
+    const date = dt ? icsDateToLocal(dt.value, dt.params) : null;
+    const summary = ev.SUMMARY ? unescape(ev.SUMMARY.value) : "";
+    if (!date || !summary) continue;
+    const course = unescape(ev.LOCATION?.value ?? ev["X-D2L-ORGUNIT"]?.value ?? "");
+    events.push({ summary, date, course, orgUnit: findOrgUnit(ev) });
   }
   return events;
 }
 
-export async function fetchFeed(url: string): Promise<FeedEvent[]> {
-  const res = await fetch(url, { cache: "no-store" });
+/** Group feed events into the courses they belong to, for the course picker. */
+export function feedCourses(events: FeedEvent[]): { key: string; label: string; count: number; samples: string[] }[] {
+  const groups = new Map<string, { label: string; count: number; samples: string[] }>();
+  for (const e of events) {
+    const key = e.orgUnit || e.course || NO_LABEL;
+    const g = groups.get(key) ?? { label: e.course || "", count: 0, samples: [] };
+    if (!g.label && e.course) g.label = e.course;
+    g.count++;
+    if (g.samples.length < 4 && !g.samples.includes(e.summary)) g.samples.push(e.summary);
+    groups.set(key, g);
+  }
+  return [...groups.entries()]
+    .map(([key, g]) => ({ key, label: g.label || `Course ${key}`, count: g.count, samples: g.samples }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export async function fetchFeedText(url: string): Promise<string> {
+  const res = await fetch(url, { cache: "no-store", redirect: "error" });
   if (!res.ok) throw new Error(`Brightspace feed returned ${res.status}`);
-  return parseIcs(await res.text());
+  const text = await res.text();
+  if (!text.includes("BEGIN:VCALENDAR")) throw new Error("That link didn't return a calendar.");
+  return text;
+}
+
+export async function fetchFeed(url: string): Promise<FeedEvent[]> {
+  return parseIcs(await fetchFeedText(url));
 }
 
 /** Keep events inside the semester and, when possible, for this course. */
@@ -84,9 +124,18 @@ export function filterForCourse(
   events: FeedEvent[],
   course: { name: string; code: string },
   from: string,
-  to: string
+  to: string,
+  courseKey?: string | null
 ): { matched: FeedEvent[]; matchedByCourse: boolean } {
   const inRange = events.filter((e) => e.date >= from && e.date <= to);
+  // The user picked the Brightspace course: filter strictly by it
+  if (courseKey) {
+    const picked =
+      courseKey === NO_LABEL
+        ? inRange.filter((e) => !e.orgUnit && !e.course)
+        : inRange.filter((e) => e.orgUnit === courseKey || e.course === courseKey);
+    return { matched: picked, matchedByCourse: true };
+  }
   const code = course.code.replace(/[^a-z0-9]/gi, "").toLowerCase(); // ISM250001
   const shortCode = code.replace(/\d{3}$/, ""); // ISM250
   const nameWords = course.name.toLowerCase().split(/\W+/).filter((w) => w.length > 3);

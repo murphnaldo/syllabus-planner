@@ -28,13 +28,13 @@ export default function LoginPage() {
   return (
     <main className="shell narrow">
       <h1>Syllabus Planner</h1>
-      <p className="muted">Enter your password to continue.</p>
+      <p className="muted">Enter your password or invite code.</p>
       <form onSubmit={submit} className="card stack">
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Password or invite code"
           autoFocus
         />
         <button className="primary" disabled={busy || !password}>

@@ -3,24 +3,56 @@ import { listAssignmentsForCourse, listCourses } from "@/lib/notion";
 import { fetchFeed, filterForCourse } from "@/lib/ics";
 import { extractItems } from "@/lib/extract";
 import { findDuplicate } from "@/lib/dedupe";
-import type { FeedEvent, PlannerItem } from "@/lib/types";
+import { getFeedUrl, getSession } from "@/lib/session";
+import { checkInvite, recordRun } from "@/lib/supabase";
+import type { Course, ExistingAssignment, FeedEvent, PlannerItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+const isDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
     const form = await req.formData();
-    const courseId = String(form.get("courseId") ?? "");
     const semesterStart = String(form.get("semesterStart") ?? "");
     const semesterEnd = String(form.get("semesterEnd") ?? "");
     const useFeed = form.get("useFeed") === "true";
+    const feedCourseKey = String(form.get("feedCourseKey") ?? "") || null;
     const extraNotes = String(form.get("notes") ?? "").slice(0, 1000);
     const file = form.get("syllabus");
 
-    if (!courseId) return NextResponse.json({ error: "Pick a course." }, { status: 400 });
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(semesterStart) || !/^\d{4}-\d{2}-\d{2}$/.test(semesterEnd)) {
+    if (!isDate(semesterStart) || !isDate(semesterEnd) || semesterEnd < semesterStart) {
       return NextResponse.json({ error: "Enter the semester start and end dates." }, { status: 400 });
+    }
+
+    // Friends: check their invite still has runs left before spending AI credits
+    if (session.role === "guest") {
+      const invite = await checkInvite(session.code);
+      if (!invite) return NextResponse.json({ error: "This invite code is no longer active." }, { status: 401 });
+      if (invite.used >= invite.limit) {
+        return NextResponse.json(
+          { error: `You've used all ${invite.limit} runs for this semester. Ask Aaron for more.` },
+          { status: 429 }
+        );
+      }
+    }
+
+    // Which course? Owner picks from Notion; friends type it in
+    let course: Course;
+    if (session.role === "owner") {
+      const courseId = String(form.get("courseId") ?? "");
+      const found = (await listCourses()).find((c) => c.id === courseId);
+      if (!found) return NextResponse.json({ error: "Pick a course." }, { status: 400 });
+      course = found;
+    } else {
+      const name = String(form.get("courseName") ?? "").trim().slice(0, 120);
+      const code = String(form.get("courseCode") ?? "").trim().slice(0, 40);
+      if (!name) return NextResponse.json({ error: "Enter the course name." }, { status: 400 });
+      course = { id: "", name, code, term: "", meetingTimes: "" };
     }
 
     let pdfBase64: string | null = null;
@@ -34,19 +66,18 @@ export async function POST(req: Request) {
       pdfBase64 = Buffer.from(await file.arrayBuffer()).toString("base64");
     }
 
-    const courses = await listCourses();
-    const course = courses.find((c) => c.id === courseId);
-    if (!course) return NextResponse.json({ error: "Course not found in Notion." }, { status: 404 });
-
     let feedEvents: FeedEvent[] = [];
     let feedMatchedByCourse = false;
     const warnings: string[] = [];
-    if (useFeed && process.env.BRIGHTSPACE_ICS_URL) {
+    if (useFeed) {
       try {
-        const all = await fetchFeed(process.env.BRIGHTSPACE_ICS_URL);
-        const filtered = filterForCourse(all, course, semesterStart, semesterEnd);
-        feedEvents = filtered.matched;
-        feedMatchedByCourse = filtered.matchedByCourse;
+        const url = await getFeedUrl(req, String(form.get("feedUrl") ?? "") || null);
+        if (url) {
+          const all = await fetchFeed(url);
+          const filtered = filterForCourse(all, course, semesterStart, semesterEnd, feedCourseKey);
+          feedEvents = filtered.matched;
+          feedMatchedByCourse = filtered.matchedByCourse;
+        }
       } catch (err) {
         warnings.push(`Could not read the Brightspace feed: ${(err as Error).message}`);
       }
@@ -60,21 +91,21 @@ export async function POST(req: Request) {
     }
 
     const [existing, result] = await Promise.all([
-      listAssignmentsForCourse(courseId),
-      extractItems({
-        pdfBase64,
-        course,
-        semesterStart,
-        semesterEnd,
-        feedEvents,
-        feedMatchedByCourse,
-        extraNotes,
-      }),
+      session.role === "owner" ? listAssignmentsForCourse(course.id) : Promise.resolve([] as ExistingAssignment[]),
+      extractItems({ pdfBase64, course, semesterStart, semesterEnd, feedEvents, feedMatchedByCourse, extraNotes }),
     ]);
+
+    // Count the run only after it succeeded
+    let usage: { used: number; limit: number } | null = null;
+    if (session.role === "guest") {
+      const used = await recordRun(session.code).catch(() => null);
+      const invite = await checkInvite(session.code).catch(() => null);
+      usage = invite ? { used: used ?? invite.used, limit: invite.limit } : null;
+    }
 
     const items: PlannerItem[] = result.items
       .map((raw, i) => {
-        const end = raw.end && raw.end !== raw.start && /^\d{4}-\d{2}-\d{2}$/.test(raw.end) ? raw.end : null;
+        const end = raw.end && raw.end !== raw.start && isDate(raw.end) ? raw.end : null;
         const duplicateOf = findDuplicate(raw.name, raw.start, end, existing);
         return {
           key: `${i}-${raw.start}-${raw.name}`,
@@ -94,11 +125,8 @@ export async function POST(req: Request) {
       course,
       items,
       warnings: [...warnings, ...result.warnings],
-      stats: {
-        feedEvents: feedEvents.length,
-        existing: existing.length,
-        tokens: result.usage,
-      },
+      usage,
+      stats: { feedEvents: feedEvents.length, existing: existing.length, tokens: result.usage },
     });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

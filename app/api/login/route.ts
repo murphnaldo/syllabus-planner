@@ -1,24 +1,46 @@
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE, sessionToken } from "@/lib/auth";
+import { SESSION_COOKIE, createSessionToken, type Session } from "@/lib/auth";
+import { checkInvite } from "@/lib/supabase";
 
+/** One box: the owner's password, or a friend's invite code. */
 export async function POST(req: Request) {
   const { password } = (await req.json().catch(() => ({}))) as { password?: string };
-  const expected = process.env.APP_PASSWORD;
-  if (!expected) {
+  const entered = (password ?? "").trim();
+  const ownerPassword = process.env.APP_PASSWORD;
+  if (!ownerPassword) {
     return NextResponse.json({ error: "APP_PASSWORD is not set on the server." }, { status: 500 });
   }
-  if (password !== expected) {
-    // Small delay to slow down guessing
-    await new Promise((r) => setTimeout(r, 600));
-    return NextResponse.json({ error: "Wrong password." }, { status: 401 });
+
+  let session: Session | null = null;
+  if (entered && entered === ownerPassword) {
+    session = { role: "owner" };
+  } else if (/^[A-Za-z0-9-]{4,32}$/.test(entered)) {
+    try {
+      const invite = await checkInvite(entered);
+      if (invite) session = { role: "guest", code: entered.toUpperCase(), name: invite.name };
+    } catch {
+      return NextResponse.json({ error: "Could not check that code right now. Try again." }, { status: 503 });
+    }
   }
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, await sessionToken(expected), {
+
+  if (!session) {
+    await new Promise((r) => setTimeout(r, 600)); // slow down guessing
+    return NextResponse.json({ error: "That password or invite code didn't work." }, { status: 401 });
+  }
+
+  const res = NextResponse.json({ ok: true, role: session.role });
+  res.cookies.set(SESSION_COOKIE, await createSessionToken(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 60 * 60 * 24 * 120,
   });
+  return res;
+}
+
+export async function DELETE() {
+  const res = NextResponse.json({ ok: true });
+  res.cookies.delete(SESSION_COOKIE);
   return res;
 }

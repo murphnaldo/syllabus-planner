@@ -30,5 +30,6 @@ export type PlannerItem = {
 export type FeedEvent = {
   summary: string;
   date: string; // local YYYY-MM-DD (America/New_York)
-  course: string; // best guess from LOCATION/DESCRIPTION
+  course: string; // course label from LOCATION, if Brightspace sets it
+  orgUnit: string; // Brightspace course ID from the event link, if present
 };
