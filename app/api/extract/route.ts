@@ -6,7 +6,7 @@ import { findDuplicate } from "@/lib/dedupe";
 import type { FeedEvent, PlannerItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {

@@ -32,6 +32,7 @@ Follow the student's rules exactly:
 6. Only include items for THIS course. Ignore class meetings, office hours, and non-graded events.
 7. Use clear short names a student would write, like "Quiz 3: Deep Learning Applications", "Exam 1", "Homework 4".
 8. Dates are YYYY-MM-DD. Do not invent items or dates you cannot justify from the syllabus, the feed, or a stated rule.
+9. Keep each note under 15 words, and leave it empty when the source and date are obvious. Put course-wide caveats in warnings once instead of repeating them per item.
 
 Return the result by calling the submit_items tool exactly once. Do not reply with plain text.`;
 
@@ -110,7 +111,8 @@ export async function extractItems(
     },
     body: JSON.stringify({
       model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
-      max_tokens: 8000,
+      // Big courses (50+ items) plus the model's thinking need plenty of room
+      max_tokens: 32000,
       system: SYSTEM,
       tools: [TOOL],
       // Newer models only accept "auto" here; the prompt tells it to call the tool
@@ -122,6 +124,11 @@ export async function extractItems(
   const data: any = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(`AI request failed (${res.status}): ${data?.error?.message ?? "unknown error"}`);
+  }
+  if (data.stop_reason === "max_tokens") {
+    throw new Error(
+      "The AI ran out of room before finishing this course's list. Try again, or add a note like \"skip attendance quizzes\" to shorten it."
+    );
   }
   const blocks: any[] = data.content ?? [];
   const call = blocks.find((b) => b.type === "tool_use" && b.name === "submit_items");
