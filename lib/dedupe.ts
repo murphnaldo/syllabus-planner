@@ -11,6 +11,10 @@ const KIND_WORDS = new Set([
 ]);
 // For these, "Midterm" and "Midterm 1" in the same week are the same thing
 const EXAM_WORDS = new Set(["exam", "midterm", "final", "test"]);
+// Common words that say nothing about which specific item it is
+const GENERIC_WORDS = new Set(["chapter", "ch", "class", "pre", "post", "week", "module", "unit", "video", "overview", "concept"]);
+// "Practice Exam 2" and "Exam 2" are different items
+const PRACTICE_WORDS = ["practice", "bonus", "review"];
 
 export function tokens(s: string): Set<string> {
   return new Set(
@@ -47,7 +51,13 @@ function isMatch(name: string, start: string, end: string | null, ex: ExistingAs
   const bothNumbered = numsA.length > 0 && numsB.length > 0;
   const numMatch = bothNumbered && numsA.some((n) => numsB.includes(n));
 
-  const topicShared = [...A].filter((w) => B.has(w) && !isNumber(w) && !KIND_WORDS.has(w));
+  const practiceA = PRACTICE_WORDS.some((w) => A.has(w));
+  const practiceB = PRACTICE_WORDS.some((w) => B.has(w));
+  if (practiceA !== practiceB) return false;
+
+  const topicShared = [...A].filter(
+    (w) => B.has(w) && !isNumber(w) && !KIND_WORDS.has(w) && !GENERIC_WORDS.has(w)
+  );
 
   if (overlaps(start, end, ex)) {
     if (numMatch && (sharedKind.length || topicShared.length)) return true; // Assignment 4 / Assignment 4: Predictive Model

@@ -83,4 +83,23 @@ assert.equal(findDuplicate("Assignment 4: Train a Simple Predictive Model", "202
 assert.equal(findDuplicate("Midterm Exam 1: MCQ and Vibe Coding/Data Analytics", "2026-10-09", null, ism250), "Midterm");
 assert.equal(findDuplicate("Final Exam", "2026-12-07", "2026-12-11", ism250), null);
 
+// Cases from the ACCT 201 run (Aaron's Notion uses generic names on matching dates)
+const acctNotion = [
+  { id: "p1", name: "Practice Exam (bonus points)", start: "2026-09-23", end: null },
+  { id: "p2", name: "Practice Exam 2", start: "2026-10-28", end: null },
+  { id: "s7", name: "Smartbook Chapter 7", start: "2026-10-12", end: null },
+  { id: "s1", name: "Smartbook Chapter 1", start: "2026-08-31", end: null },
+  { id: "pc", name: "Post-class Assignment (2)", start: "2026-09-09", end: null },
+  { id: "pr", name: "Pre-class Assignment 2 (2)", start: "2026-09-17", end: null },
+  { id: "pj", name: "Project 2", start: "2026-11-02", end: null },
+];
+assert.equal(findDuplicate("Exam 1", "2026-09-23", null, acctNotion), null);
+assert.equal(findDuplicate("Exam 2", "2026-10-28", null, acctNotion), null);
+assert.equal(findDuplicate("Practice Exam 2", "2026-10-28", null, acctNotion), "Practice Exam 2");
+assert.equal(findDuplicate("Chapter 6 Concept Overview Video", "2026-10-12", null, acctNotion), null);
+assert.equal(findDuplicate("Chapter 1 SmartBook", "2026-08-31", null, acctNotion), "Smartbook Chapter 1");
+assert.equal(findDuplicate("Post-Class Assignment 2", "2026-09-09", null, acctNotion), "Post-class Assignment (2)");
+assert.equal(findDuplicate("Pre-Class Assignment 3.2", "2026-09-17", null, acctNotion), "Pre-class Assignment 2 (2)");
+assert.equal(findDuplicate("Project 2: Great Adventures", "2026-11-02", null, acctNotion), "Project 2");
+
 console.log("All checks passed");
