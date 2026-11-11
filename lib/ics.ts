@@ -1,3 +1,4 @@
+import { bestCourseMatch } from "./courseMatch.ts";
 import type { FeedEvent } from "./types";
 
 const TZ = "America/New_York";
@@ -136,18 +137,11 @@ export function filterForCourse(
         : inRange.filter((e) => e.orgUnit === courseKey || e.course === courseKey);
     return { matched: picked, matchedByCourse: true };
   }
-  const code = course.code.replace(/[^a-z0-9]/gi, "").toLowerCase(); // ISM250001
-  const shortCode = code.replace(/\d{3}$/, ""); // ISM250
-  const nameWords = course.name.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
-
-  const matched = inRange.filter((e) => {
-    const hay = `${e.course} ${e.summary}`.toLowerCase();
-    const hayCompact = hay.replace(/[^a-z0-9]/g, "");
-    if (shortCode && hayCompact.includes(shortCode)) return true;
-    const hits = nameWords.filter((w) => hay.includes(w)).length;
-    return nameWords.length > 0 && hits >= Math.min(2, nameWords.length);
-  });
-  return matched.length > 0
-    ? { matched, matchedByCourse: true }
-    : { matched: inRange, matchedByCourse: false };
+  // No pick: find the Brightspace course whose (often abbreviated) name matches best
+  const labels = [...new Set(inRange.map((e) => e.course).filter(Boolean))];
+  const best = bestCourseMatch(course.name, course.code, labels, (l) => l);
+  if (best) {
+    return { matched: inRange.filter((e) => e.course === best), matchedByCourse: true };
+  }
+  return { matched: inRange, matchedByCourse: false };
 }

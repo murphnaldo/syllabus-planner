@@ -180,3 +180,25 @@ assert.equal(isFeedUrl("https://evil.example.com/steal"), false);
 assert.equal(isFeedUrl("not a url"), false);
 
 console.log("All new checks passed");
+
+// ---- Matching Notion course names to Brightspace's abbreviated labels (real labels from Aaron's feed) ----
+import { bestCourseMatch } from "../lib/courseMatch.ts";
+const labels = [
+  "Accounting Principles I 001",
+  "Appl Devlpmt for Bus Processes 001",
+  "Mgmt: Principles & Concepts 002",
+  "Intro to Applied AI and IS 001",
+  "Database Mgmt for Info System 001",
+  "Honors Complex Common Room (The Williams Honors College - 4217)",
+  "Honors Common Room (The Williams Honors College)",
+  "The Williams Honors College",
+  "Diving into Online Learning - Brightspace Orientation",
+];
+const pick = (name: string, code: string) => bestCourseMatch(name, code, labels, (l) => l);
+assert.equal(pick("Database Management for IS", "ISM324-001"), "Database Mgmt for Info System 001");
+assert.equal(pick("Accounting Principles I", "ACCT201-001"), "Accounting Principles I 001");
+assert.equal(pick("Business Processes", "ISM315-001"), "Appl Devlpmt for Bus Processes 001");
+assert.equal(pick("Management Principles & Concepts", "MGMT201-002"), "Mgmt: Principles & Concepts 002");
+assert.equal(pick("Intro to Applied AI and IS", "ISM250-001"), "Intro to Applied AI and IS 001");
+assert.equal(pick("Organic Chemistry", ""), null, "no match means let the AI decide");
+console.log("Course matching checks passed");

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Course, PlannerItem } from "@/lib/types";
 import { buildIcs } from "@/lib/icsExport";
+import { bestCourseMatch } from "@/lib/courseMatch";
 
 type Step = "upload" | "review" | "done";
 type Me =
@@ -31,20 +32,7 @@ function save(key: string, value: string) {
 
 /** Best guess at which Brightspace course matches the course being planned. */
 function guessFeedCourse(feed: FeedCourse[], name: string, code: string): string {
-  const words = name.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
-  const shortCode = code.toLowerCase().replace(/[^a-z0-9]/g, "").replace(/\d{3}$/, "");
-  let best = "";
-  let bestScore = 0;
-  for (const f of feed) {
-    const hay = `${f.label} ${f.samples.join(" ")}`.toLowerCase();
-    let score = words.filter((w) => hay.includes(w)).length;
-    if (shortCode.length >= 5 && hay.replace(/[^a-z0-9]/g, "").includes(shortCode)) score += 3;
-    if (score > bestScore) {
-      bestScore = score;
-      best = f.key;
-    }
-  }
-  return bestScore >= 2 ? best : "";
+  return bestCourseMatch(name, code, feed, (f) => f.label)?.key ?? "";
 }
 
 function download(filename: string, text: string) {
