@@ -4,7 +4,7 @@ import { fetchFeed, filterForCourse } from "@/lib/ics";
 import { extractItems } from "@/lib/extract";
 import { findDuplicate } from "@/lib/dedupe";
 import { getFeedUrl, getSession } from "@/lib/session";
-import { checkInvite, recordRun } from "@/lib/supabase";
+import { guestStatus, outOfRunsMessage, recordGuestRun } from "@/lib/usage";
 import type { Course, ExistingAssignment, FeedEvent, PlannerItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -31,13 +31,10 @@ export async function POST(req: Request) {
 
     // Friends: check their invite still has runs left before spending AI credits
     if (session.role === "guest") {
-      const invite = await checkInvite(session.code);
-      if (!invite) return NextResponse.json({ error: "This invite code is no longer active." }, { status: 401 });
+      const invite = await guestStatus(session.code);
+      if (!invite) return NextResponse.json({ error: "This code is no longer active." }, { status: 401 });
       if (invite.used >= invite.limit) {
-        return NextResponse.json(
-          { error: `You've used all ${invite.limit} runs for this semester. Ask Aaron for more.` },
-          { status: 429 }
-        );
+        return NextResponse.json({ error: outOfRunsMessage(invite.limit) }, { status: 429 });
       }
     }
 
@@ -98,8 +95,8 @@ export async function POST(req: Request) {
     // Count the run only after it succeeded
     let usage: { used: number; limit: number } | null = null;
     if (session.role === "guest") {
-      const used = await recordRun(session.code).catch(() => null);
-      const invite = await checkInvite(session.code).catch(() => null);
+      const used = await recordGuestRun(session.code).catch(() => null);
+      const invite = await guestStatus(session.code).catch(() => null);
       usage = invite ? { used: used ?? invite.used, limit: invite.limit } : null;
     }
 

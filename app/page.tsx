@@ -256,12 +256,19 @@ export default function Home() {
     <main className="shell">
       <div className="toolbar" style={{ marginBottom: 0 }}>
         <h1>Syllabus Planner</h1>
-        <button onClick={signOut} className="small">Sign out</button>
+        <div className="filters">
+          {isOwner && (
+            <a href="/admin">
+              <button className="small">Students</button>
+            </a>
+          )}
+          <button onClick={signOut} className="small">Sign out</button>
+        </div>
       </div>
       <p className="muted">
         {isOwner
           ? "Syllabus and Brightspace in, Notion Student Planner out."
-          : `Hi ${me.name}. Turn a syllabus into a calendar file you can import anywhere. ${runsLeft} of ${me.limit} runs left this semester.`}
+          : `Hi ${me.name}. Turn a syllabus into a calendar file you can import anywhere. ${runsLeft} of ${me.limit} uploads left this semester.`}
       </p>
 
       {error && <p className="warn">{error}</p>}
@@ -410,7 +417,7 @@ export default function Home() {
             {busy
               ? "Reading the syllabus... (up to a minute for big courses)"
               : runsLeft === 0
-                ? "No runs left this semester"
+                ? "No uploads left this semester"
                 : "Find assignments and exams"}
           </button>
         </>
