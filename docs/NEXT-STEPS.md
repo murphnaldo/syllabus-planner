@@ -9,7 +9,7 @@ Done already: database tables, approval mode, any .edu email, 5 uploads, daily c
 3. **Tell Claude the Gmail address** and where alerts should go. Claude adds `SMTP_USER`, `EMAIL_FROM` ("Syllabuddy <address>"), and `CONTACT_EMAIL`.
 4. **Merge the pull request.** Vercel puts it live in about a minute.
 5. **Live test:** request a code with your @uakron.edu email, approve yourself on `/admin`, check the email lands in your inbox (not spam), sign in, run one syllabus.
-6. **Set a monthly spending limit** in the Anthropic console (Settings > Limits) as a hard backstop.
+6. **Set a monthly spending limit** in the Anthropic console as a hard backstop.
 
 ## Week 1: friends test it (approval mode)
 
