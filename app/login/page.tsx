@@ -66,7 +66,10 @@ export default function LoginPage() {
     }
   }
 
-  const domainHint = domains.length ? domains.map((d) => "@" + d).join(" or ") : "school";
+  const domainHint = domains.length
+    ? domains.map((d) => (d.includes(".") ? "@" + d : "." + d)).join(" or ")
+    : "college";
+  const placeholderDomain = domains.find((d) => d.includes(".")) ?? "school.edu";
 
   return (
     <main className="shell landing">
@@ -80,7 +83,7 @@ export default function LoginPage() {
       <ol className="steps">
         <li>
           <b>Upload your syllabus</b>
-          <span>The PDF from Brightspace. Add your Brightspace calendar link for exact due dates.</span>
+          <span>The PDF from your course site. Add your Brightspace, Canvas, or Blackboard calendar link for exact due dates.</span>
         </li>
         <li>
           <b>Review the list</b>
@@ -105,12 +108,12 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={requestCode} className="stack">
                 <label>
-                  School email
+                  College email
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={`you${domains[0] ? "@" + domains[0] : "@school.edu"}`}
+                    placeholder={`you@${placeholderDomain}`}
                     autoComplete="email"
                     required
                   />
@@ -128,7 +131,7 @@ export default function LoginPage() {
                   {sending ? "Sending..." : mode === "approval" ? "Request a code" : "Email me a code"}
                 </button>
                 <p className="muted small">
-                  Free for students with a {domainHint} email: 5 syllabus uploads each semester.
+                  Free for college students with a {domainHint} email: 5 syllabus uploads each semester.
                   {mode === "approval" && " Requests are approved by hand, usually within a day."}
                 </p>
                 {signupError && <p className="error">{signupError}</p>}

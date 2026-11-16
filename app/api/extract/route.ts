@@ -76,13 +76,13 @@ export async function POST(req: Request) {
           feedMatchedByCourse = filtered.matchedByCourse;
         }
       } catch (err) {
-        warnings.push(`Could not read the Brightspace feed: ${(err as Error).message}`);
+        warnings.push(`Could not read the course calendar: ${(err as Error).message}`);
       }
     }
 
     if (!pdfBase64 && feedEvents.length === 0) {
       return NextResponse.json(
-        { error: "Upload a syllabus PDF, or turn on the Brightspace feed." },
+        { error: "Upload a syllabus PDF, or turn on your course calendar." },
         { status: 400 }
       );
     }

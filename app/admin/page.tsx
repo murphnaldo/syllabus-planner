@@ -8,6 +8,7 @@ type Student = {
   status: "pending" | "active" | "blocked";
   run_limit: number;
   used: number;
+  school: string;
   created_at: string;
   last_used_at: string | null;
 };
@@ -30,6 +31,7 @@ export default function AdminPage() {
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [show, setShow] = useState<"all" | "pending" | "active" | "blocked">("all");
+  const [school, setSchool] = useState("");
 
   async function load() {
     const res = await fetch("/api/admin/students");
@@ -68,20 +70,27 @@ export default function AdminPage() {
       runs,
       maxedOut: s.filter((x) => x.status === "active" && x.used >= x.run_limit).length,
       cost: runs * (data?.costPerRun ?? 0),
+      schools: new Set(s.map((x) => x.school)).size,
     };
   }, [data]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (data?.students ?? []).filter(
-      (s) => (show === "all" || s.status === show) && (!q || s.email.includes(q))
+      (s) => (show === "all" || s.status === show) && (!school || s.school === school) && (!q || s.email.includes(q))
     );
-  }, [data, query, show]);
+  }, [data, query, show, school]);
+
+  const schools = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of data?.students ?? []) counts.set(s.school, (counts.get(s.school) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [data]);
 
   function downloadCsv() {
-    const header = "email,status,used,limit,joined,last_used";
+    const header = "email,school,status,used,limit,joined,last_used";
     const lines = (data?.students ?? []).map((s) =>
-      [s.email, s.status, s.used, s.run_limit, s.created_at.slice(0, 10), s.last_used_at?.slice(0, 10) ?? ""].join(",")
+      [s.email, s.school, s.status, s.used, s.run_limit, s.created_at.slice(0, 10), s.last_used_at?.slice(0, 10) ?? ""].join(",")
     );
     const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
@@ -96,7 +105,7 @@ export default function AdminPage() {
         <div>
           <h1>Students</h1>
           <p className="muted" style={{ margin: 0 }}>
-            {data ? `${data.term.replace("-", " ")} · sign-ups are ${data.mode}` : "Loading..."}
+            {data ? `${data.term.replace("-", " ")} · ${{ open: "sign-ups are open", approval: "sign-ups need your approval", closed: "sign-ups are closed" }[data.mode]}` : "Loading..."}
             {data && !data.emailConfigured && " · email isn't set up yet"}
           </p>
         </div>
@@ -120,7 +129,7 @@ export default function AdminPage() {
             <div className="stat"><b>{stats.runs}</b><span>uploads this semester</span></div>
             <div className="stat"><b>${stats.cost.toFixed(2)}</b><span>estimated AI cost</span></div>
             <div className="stat"><b>{stats.pending}</b><span>waiting for approval</span></div>
-            <div className="stat"><b>{stats.maxedOut}</b><span>used all their uploads</span></div>
+            <div className="stat"><b>{stats.schools}</b><span>{stats.schools === 1 ? "school" : "schools"}</span></div>
           </div>
 
           <section className="card">
@@ -132,7 +141,15 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-              <input type="text" placeholder="Search email" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <div className="filters">
+                <select value={school} onChange={(e) => setSchool(e.target.value)} style={{ width: "auto" }}>
+                  <option value="">All schools</option>
+                  {schools.map(([name, n]) => (
+                    <option key={name} value={name}>{name} ({n})</option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Search email" value={query} onChange={(e) => setQuery(e.target.value)} />
+              </div>
             </div>
             {notice && <p className="warn">{notice}</p>}
             {rows.length === 0 ? (
@@ -143,6 +160,7 @@ export default function AdminPage() {
                   <thead>
                     <tr>
                       <th>Email</th>
+                      <th>School</th>
                       <th>Status</th>
                       <th>Uploads</th>
                       <th>Joined</th>
@@ -154,6 +172,7 @@ export default function AdminPage() {
                     {rows.map((s) => (
                       <tr key={s.email}>
                         <td>{s.email}</td>
+                        <td>{s.school}</td>
                         <td><span className={`pill ${s.status}`}>{s.status}</span></td>
                         <td>{s.used} of {s.run_limit}</td>
                         <td>{fmtDate(s.created_at)}</td>

@@ -54,7 +54,19 @@ export function findOrgUnit(ev: RawEvent): string {
       v.match(/\/d2l\/home\/(\d{4,})/i);
     if (m) return m[1];
   }
+  // Canvas links look like /courses/12345/assignments/... or ?include_contexts=course_12345
+  for (const key of ["URL", "DESCRIPTION", "UID"]) {
+    const v = ev[key]?.value ?? "";
+    const m = v.match(/\/courses\/(\d+)/i) || v.match(/course_(\d+)/i);
+    if (m) return `canvas-${m[1]}`;
+  }
   return "";
+}
+
+/** Canvas puts the course at the end of each title: "Homework 1 [CS 101 Intro]". */
+export function splitCanvasTitle(summary: string): { title: string; course: string } {
+  const m = summary.match(/^(.*\S)\s*\[([^\[\]]+)\]\s*$/);
+  return m ? { title: m[1], course: m[2].trim() } : { title: summary, course: "" };
 }
 
 export function parseIcsRaw(text: string): RawEvent[] {
@@ -84,10 +96,20 @@ export function parseIcs(text: string): FeedEvent[] {
   for (const ev of parseIcsRaw(text)) {
     const dt = ev.DTSTART ?? ev.DTEND ?? ev.DUE;
     const date = dt ? icsDateToLocal(dt.value, dt.params) : null;
-    const summary = ev.SUMMARY ? unescape(ev.SUMMARY.value) : "";
-    if (!date || !summary) continue;
-    const course = unescape(ev.LOCATION?.value ?? ev["X-D2L-ORGUNIT"]?.value ?? "");
-    events.push({ summary, date, course, orgUnit: findOrgUnit(ev) });
+    const rawSummary = ev.SUMMARY ? unescape(ev.SUMMARY.value) : "";
+    if (!date || !rawSummary) continue;
+    const orgUnit = findOrgUnit(ev);
+    let summary = rawSummary;
+    let course = unescape(ev.LOCATION?.value ?? ev["X-D2L-ORGUNIT"]?.value ?? "");
+    // Canvas: course name comes from the [brackets] in the title
+    if (orgUnit.startsWith("canvas-") || !course) {
+      const split = splitCanvasTitle(rawSummary);
+      if (split.course) {
+        summary = split.title;
+        course = split.course;
+      }
+    }
+    events.push({ summary, date, course, orgUnit });
   }
   return events;
 }
@@ -110,7 +132,7 @@ export function feedCourses(events: FeedEvent[]): { key: string; label: string; 
 
 export async function fetchFeedText(url: string): Promise<string> {
   const res = await fetch(url, { cache: "no-store", redirect: "error" });
-  if (!res.ok) throw new Error(`Brightspace feed returned ${res.status}`);
+  if (!res.ok) throw new Error(`The calendar link returned an error (${res.status}). Check that you copied the whole link.`);
   const text = await res.text();
   if (!text.includes("BEGIN:VCALENDAR")) throw new Error("That link didn't return a calendar.");
   return text;

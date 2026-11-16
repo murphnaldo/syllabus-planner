@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { emailConfigured, sendAccessCode } from "@/lib/email";
 import { currentTerm } from "@/lib/supabase";
-import { getStudentByEmail, listStudents, signupMode, updateStudent } from "@/lib/students";
+import { getStudentByEmail, listStudents, schoolOf, signupMode, updateStudent } from "@/lib/students";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ async function ownerOnly() {
 export async function GET() {
   if (!(await ownerOnly())) return NextResponse.json({ error: "Owner only" }, { status: 403 });
   try {
-    const students = await listStudents();
+    const students = (await listStudents()).map((s) => ({ ...s, school: schoolOf(s.email) }));
     return NextResponse.json({
       term: currentTerm(),
       mode: signupMode(),

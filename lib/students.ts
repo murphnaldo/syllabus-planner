@@ -139,9 +139,9 @@ export async function listStudents(term = currentTerm()): Promise<StudentWithUsa
   return students.map((s) => ({ ...s, used: used.get(s.email) ?? 0 }));
 }
 
-/** Allowed school email domains, e.g. "uakron.edu,zips.uakron.edu". Subdomains count too. */
+/** Allowed email domains. "edu" allows any college (kent.edu, uakron.edu, ...); "uakron.edu" allows one school. Subdomains count too. */
 export function allowedDomains(): string[] {
-  return (process.env.ALLOWED_EMAIL_DOMAINS || "uakron.edu")
+  return (process.env.ALLOWED_EMAIL_DOMAINS || "edu")
     .split(",")
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean);
@@ -160,9 +160,15 @@ export function emailAllowed(email: string): boolean {
 
 export type SignupMode = "open" | "approval" | "closed";
 export function signupMode(): SignupMode {
-  const m = (process.env.SIGNUP_MODE || "open").toLowerCase();
-  return m === "approval" || m === "closed" ? m : "open";
+  const m = (process.env.SIGNUP_MODE || "approval").toLowerCase();
+  return m === "open" || m === "closed" ? m : "approval";
 }
 
 /** Friendly first name from an email: "jdoe12@uakron.edu" -> "jdoe12" */
 export const displayName = (email: string) => email.split("@")[0];
+
+/** "jdoe@zips.uakron.edu" -> "uakron.edu", "abc@kent.edu" -> "kent.edu" */
+export function schoolOf(email: string): string {
+  const parts = (email.split("@")[1] ?? "").split(".");
+  return parts.length > 2 ? parts.slice(-2).join(".") : parts.join(".");
+}

@@ -41,7 +41,8 @@ export async function POST(req: Request) {
   const email = normalizeEmail(body.email ?? "");
   if (!email) return reply({ ok: false, error: "Enter a valid email address." }, 400);
   if (!emailAllowed(email)) {
-    return reply({ ok: false, error: `Use your school email (${allowedDomains().map((d) => "@" + d).join(" or ")}).` }, 400);
+    const hint = allowedDomains().map((d) => (d.includes(".") ? "@" + d : "a ." + d + " address")).join(" or ");
+    return reply({ ok: false, error: `Use your college email (${hint}).` }, 400);
   }
 
   try {

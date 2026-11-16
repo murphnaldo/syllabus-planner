@@ -4,7 +4,7 @@ The goal: easy for students to start, while you keep control of usage because yo
 
 ## What's built on this branch
 
-Students go to the site, type their `@uakron.edu` email, and get a personal code by email (`ZIP-7K2Q-M4XD`) with a sign-in link. Each code gets 5 uploads per semester. You see everyone on `/admin`. Friend invite codes like Bri's keep working.
+Students go to the site, type their college (.edu) email, and get a personal code by email (`ZIP-7K2Q-M4XD`) with a sign-in link. Each code gets 5 uploads per semester. You see everyone on `/admin`. Friend invite codes like Bri's keep working.
 
 You choose how open it is with one setting, `SIGNUP_MODE`, and you can switch anytime in Vercel without changing code.
 
@@ -15,7 +15,11 @@ You choose how open it is with one setting, `SIGNUP_MODE`, and you can switch an
 | Control over cost | Daily cap + 5 uploads each | Total control | Total control |
 | Best for | Growing fast | First few weeks, testing | Pausing if costs spike |
 
-**Recommendation:** start in **B (approval)** for the first week or two while you learn real costs and catch problems, then switch to **A (open)** before you promote it widely. Flip to **C** anytime if something goes wrong.
+**Current setup (your pick):** **B (approval)** with any `.edu` email, so friends at Kent State and other schools can request access and you approve each one. Later, switch to **A (open)** before you promote it widely, and flip to **C** anytime if something goes wrong.
+
+**Which schools** is a second setting, `ALLOWED_EMAIL_DOMAINS`: `edu` for any college (default), or a list like `uakron.edu,kent.edu`. The admin page shows each student's school and can filter by it.
+
+**Course calendars:** Brightspace (Akron), Canvas (Kent State and many others), and Blackboard calendar links all work for exact due dates. The Canvas and Blackboard support was tested on sample data, so ask your first Kent State friend to try it and tell you if anything looks off.
 
 ## What it costs you
 
