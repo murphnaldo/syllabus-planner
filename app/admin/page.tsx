@@ -95,7 +95,7 @@ export default function AdminPage() {
     const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `syllabus-planner-students-${data?.term}.csv`;
+    a.download = `syllabuddy-students-${data?.term}.csv`;
     a.click();
   }
 

@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // The emailed link is /login?code=ZIP-XXXX-XXXX
+    // The emailed link is /login?code=SB-XXXX-XXXX
     const fromLink = new URLSearchParams(window.location.search).get("code");
     if (fromLink) setCode(fromLink);
     fetch("/api/signup")
@@ -74,7 +74,7 @@ export default function LoginPage() {
   return (
     <main className="shell landing">
       <header className="hero">
-        <h1>Syllabus Planner</h1>
+        <div className="brand"><div className="mark">S</div><h1>Syllabuddy</h1></div>
         <p className="lead">
           Upload a syllabus. Get every assignment, quiz, and exam on your calendar in about a minute.
         </p>
@@ -149,7 +149,7 @@ export default function LoginPage() {
                 type="password"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="ZIP-XXXX-XXXX"
+                placeholder="SB-XXXX-XXXX"
                 autoFocus={Boolean(code)}
               />
             </label>

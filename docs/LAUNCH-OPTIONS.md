@@ -1,10 +1,10 @@
-# Launching Syllabus Planner campus-wide: options
+# Launching Syllabuddy: options
 
 The goal: easy for students to start, while you keep control of usage because you pay for the AI.
 
 ## What's built on this branch
 
-Students go to the site, type their college (.edu) email, and get a personal code by email (`ZIP-7K2Q-M4XD`) with a sign-in link. Each code gets 5 uploads per semester. You see everyone on `/admin`. Friend invite codes like Bri's keep working.
+Students go to the site, type their college (.edu) email, and get a personal code by email (`SB-7K2Q-M4XD`) with a sign-in link. Each code gets 5 uploads per semester. You see everyone on `/admin`. Friend invite codes like Bri's keep working.
 
 You choose how open it is with one setting, `SIGNUP_MODE`, and you can switch anytime in Vercel without changing code.
 

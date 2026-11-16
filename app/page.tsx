@@ -246,7 +246,7 @@ export default function Home() {
   if (!me) {
     return (
       <main className="shell">
-        <h1>Syllabus Planner</h1>
+        <div className="brand"><div className="mark">S</div><h1>Syllabuddy</h1></div>
         <p className="muted">{error || "Loading..."}</p>
       </main>
     );
@@ -255,7 +255,7 @@ export default function Home() {
   return (
     <main className="shell">
       <div className="toolbar" style={{ marginBottom: 0 }}>
-        <h1>Syllabus Planner</h1>
+        <div className="brand"><div className="mark">S</div><h1>Syllabuddy</h1></div>
         <div className="filters">
           {isOwner && (
             <a href="/admin">

@@ -17,7 +17,7 @@ function transport() {
 }
 
 const appUrl = () => (process.env.APP_URL || "https://syllabus-planner-nine.vercel.app").replace(/\/$/, "");
-const fromAddress = () => process.env.EMAIL_FROM || `Syllabus Planner <${process.env.SMTP_USER}>`;
+const fromAddress = () => process.env.EMAIL_FROM || `Syllabuddy <${process.env.SMTP_USER}>`;
 const contact = () => process.env.CONTACT_EMAIL || process.env.SMTP_USER || "";
 
 export async function sendAccessCode(to: string, code: string, runLimit: number): Promise<void> {
@@ -25,7 +25,7 @@ export async function sendAccessCode(to: string, code: string, runLimit: number)
   const text = [
     "Hi,",
     "",
-    `Here's your Syllabus Planner access code: ${code}`,
+    `Here's your Syllabuddy access code: ${code}`,
     "",
     `Sign in here: ${link}`,
     "",
@@ -35,25 +35,26 @@ export async function sendAccessCode(to: string, code: string, runLimit: number)
     "",
     contact() ? `Questions or need more uploads? Reply to this email or write to ${contact()}.` : "",
     "",
-    "Syllabus Planner",
+    "Syllabuddy",
   ].join("\n");
 
   const html = `
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1d2433">
-    <h2 style="margin:0 0 12px">Your Syllabus Planner code</h2>
+  <div style="font-family:Inter,Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#111827">
+    <div style="margin:0 0 18px"><span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;background:#16a34a;color:#fff;font-weight:700;margin-right:8px">S</span><b style="font-size:18px;vertical-align:middle">Syllabuddy</b></div>
+    <h2 style="margin:0 0 12px">Your Syllabuddy code</h2>
     <p style="margin:0 0 16px">Use this code to sign in:</p>
-    <p style="font-size:26px;font-weight:bold;letter-spacing:2px;background:#f1f3f8;border-radius:8px;padding:14px 18px;margin:0 0 18px;text-align:center">${code}</p>
-    <p style="margin:0 0 22px"><a href="${link}" style="background:#5b7cfa;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block">Sign in to Syllabus Planner</a></p>
+    <p style="font-size:26px;font-weight:bold;letter-spacing:2px;background:#dcfce7;color:#166534;border-radius:10px;padding:14px 18px;margin:0 0 18px;text-align:center">${code}</p>
+    <p style="margin:0 0 22px"><a href="${link}" style="background:#111827;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;display:inline-block">Sign in to Syllabuddy</a></p>
     <p style="margin:0 0 12px">You get <b>${runLimit} syllabus uploads</b> each semester. Each one turns a syllabus into a calendar file for Google Calendar, Apple Calendar, or Outlook.</p>
-    <p style="margin:0 0 12px;color:#5a6275">Keep this email. If you lose your code, request it again with the same email and you'll get the same one.</p>
-    ${contact() ? `<p style="margin:0;color:#5a6275">Questions or need more uploads? Reply to this email.</p>` : ""}
+    <p style="margin:0 0 12px;color:#6b7280">Keep this email. If you lose your code, request it again with the same email and you'll get the same one.</p>
+    ${contact() ? `<p style="margin:0;color:#6b7280">Questions or need more uploads? Reply to this email.</p>` : ""}
   </div>`;
 
   await transport().sendMail({
     from: fromAddress(),
     to,
     replyTo: contact() || undefined,
-    subject: `Your Syllabus Planner code: ${code}`,
+    subject: `Your Syllabuddy code: ${code}`,
     text,
     html,
   });
@@ -66,7 +67,7 @@ export async function notifyOwnerOfRequest(studentEmail: string): Promise<void> 
   await transport().sendMail({
     from: fromAddress(),
     to,
-    subject: `Syllabus Planner: ${studentEmail} asked for access`,
-    text: `${studentEmail} asked for a Syllabus Planner code.\n\nApprove or decline: ${appUrl()}/admin`,
+    subject: `Syllabuddy: ${studentEmail} asked for access`,
+    text: `${studentEmail} asked for a Syllabuddy code.\n\nApprove or decline: ${appUrl()}/admin`,
   });
 }

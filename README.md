@@ -1,4 +1,4 @@
-# Syllabus Planner
+# Syllabuddy (syllabus-planner)
 
 Upload a syllabus PDF, pull exact due dates from your Brightspace calendar, review everything, and send it to your Notion Student Planner in one click.
 
@@ -53,7 +53,7 @@ Codes are 4 to 32 letters, numbers, or dashes, and aren't case sensitive.
 
 ## Student sign-ups
 
-Students at any college can get their own access code by entering their .edu email on the sign-in page. The code is emailed to them, it looks like `ZIP-7K2Q-M4XD`, and it gives them 5 uploads per semester. Requesting again with the same email re-sends the same code, so every student is one row you can track.
+Students at any college can get their own access code by entering their .edu email on the sign-in page. The code is emailed to them, it looks like `SB-7K2Q-M4XD`, and it gives them 5 uploads per semester. Requesting again with the same email re-sends the same code, so every student is one row you can track.
 
 **Modes** (`SIGNUP_MODE`):
 - `approval` (default): students request a code, you get an email, and you approve them at `/admin`

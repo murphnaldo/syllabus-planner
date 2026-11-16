@@ -47,14 +47,14 @@ export type Student = {
 
 export type StudentWithUsage = Student & { used: number };
 
-/** Student codes look like ZIP-7K2Q-M4XD so they're easy to tell apart from friend invite codes. */
-export const isStudentCode = (code: string) => /^ZIP-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(code);
+/** Student codes look like SB-7K2Q-M4XD so they're easy to tell apart from friend invite codes. (ZIP- was the old prefix.) */
+export const isStudentCode = (code: string) => /^(SB|ZIP)-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(code);
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O or 1/I
 export function newStudentCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   const chars = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]);
-  return `ZIP-${chars.slice(0, 4).join("")}-${chars.slice(4).join("")}`;
+  return `SB-${chars.slice(0, 4).join("")}-${chars.slice(4).join("")}`;
 }
 
 export const defaultRunLimit = () => Math.max(0, Number(process.env.STUDENT_RUN_LIMIT || 5));
