@@ -1,4 +1,4 @@
-# Launching Syllabuddy: options
+# Launching SyllaBuddy: options
 
 The goal: easy for students to start, while you keep control of usage because you pay for the AI.
 

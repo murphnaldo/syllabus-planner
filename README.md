@@ -1,4 +1,4 @@
-# Syllabuddy (syllabus-planner)
+# SyllaBuddy (syllabus-planner)
 
 Upload a syllabus PDF, pull exact due dates from your Brightspace calendar, review everything, and send it to your Notion Student Planner in one click.
 

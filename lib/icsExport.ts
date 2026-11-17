@@ -35,10 +35,10 @@ export function buildIcs(items: PlannerItem[], courseLabel: string, now = new Da
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Syllabuddy//EN",
+    "PRODID:-//SyllaBuddy//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    `X-WR-CALNAME:${escapeText(courseLabel || "Syllabuddy")}`,
+    `X-WR-CALNAME:${escapeText(courseLabel || "SyllaBuddy")}`,
   ];
   items.forEach((item, i) => {
     const uid = `${compact(item.start)}-${i}-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}@syllabus-planner`;

@@ -74,7 +74,7 @@ export default function LoginPage() {
   return (
     <main className="shell landing">
       <header className="hero">
-        <div className="brand"><div className="mark">S</div><h1>Syllabuddy</h1></div>
+        <div className="brand"><div className="mark">S</div><h1>SyllaBuddy</h1></div>
         <p className="lead">
           Upload a syllabus. Get every assignment, quiz, and exam on your calendar in about a minute.
         </p>

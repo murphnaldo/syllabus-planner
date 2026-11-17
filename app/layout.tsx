@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "Syllabuddy",
+  title: "SyllaBuddy",
   description: "Upload a syllabus. Get every assignment, quiz, and exam on your calendar in about a minute.",
 };
 
