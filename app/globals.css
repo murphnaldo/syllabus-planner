@@ -153,3 +153,8 @@ input[type="checkbox"] { accent-color: var(--brand); }
 .filters input[type="text"] { width: 220px; }
 .junk-tip { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 12px 14px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
 .junk-tip span { color: var(--ink); }
+.pill.recommended { background: var(--brand-soft); color: var(--brand-ink); margin-left: 6px; vertical-align: 1px; }
+.howto { font-size: 13px; color: var(--muted); }
+.howto summary { cursor: pointer; color: var(--brand-ink); font-weight: 600; }
+.howto ul { margin: 6px 0 0; padding-left: 18px; }
+.howto li { margin: 3px 0; }

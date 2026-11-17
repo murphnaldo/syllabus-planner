@@ -85,7 +85,7 @@ export default function LoginPage() {
       <ol className="steps">
         <li>
           <b>Upload your syllabus</b>
-          <span>The PDF from your course site. Add your Brightspace, Canvas, or Blackboard calendar link for exact due dates.</span>
+          <span>The PDF from your course site, plus your Brightspace, Canvas, or Blackboard calendar link (recommended) for exact due dates.</span>
         </li>
         <li>
           <b>Review the list</b>

@@ -363,19 +363,31 @@ export default function Home() {
             </div>
 
             {!isOwner && (
-              <label>
-                Course calendar link (optional, but catches assignments the syllabus leaves out)
-                <input
-                  type="text"
-                  value={feedUrl}
-                  onChange={(e) => setFeedUrl(e.target.value)}
-                  placeholder="Paste your Brightspace, Canvas, or Blackboard calendar link"
-                />
-                <span className="small muted" style={{ margin: 0, fontWeight: 400 }}>
-                  Brightspace: Calendar &gt; Subscribe. Canvas: Calendar &gt; Calendar Feed. Blackboard: Calendar &gt;
-                  Share Calendar. Saved only on this device. Treat it like a password.
+              <div className="stack" style={{ gap: 6 }}>
+                <label>
+                  <span>
+                    Course calendar link <span className="pill recommended">Recommended</span>
+                  </span>
+                  <input
+                    type="text"
+                    value={feedUrl}
+                    onChange={(e) => setFeedUrl(e.target.value)}
+                    placeholder="Paste your Brightspace, Canvas, or Blackboard calendar link"
+                  />
+                </label>
+                <span className="small muted" style={{ margin: 0 }}>
+                  Gives exact due dates and catches assignments the syllabus leaves out. You only paste it once: it's
+                  saved on this device. Treat it like a password.
                 </span>
-              </label>
+                <details className="howto">
+                  <summary>Where do I find it?</summary>
+                  <ul>
+                    <li><b>Brightspace:</b> open Calendar, click Subscribe, and copy the link.</li>
+                    <li><b>Canvas:</b> open Calendar, click Calendar Feed (bottom right), and copy the link.</li>
+                    <li><b>Blackboard:</b> open Calendar, click the settings gear, choose Share Calendar, and copy the link.</li>
+                  </ul>
+                </details>
+              </div>
             )}
 
             <label className="inline">
@@ -414,6 +426,12 @@ export default function Home() {
             </label>
           </section>
 
+          {!isOwner && !feedAvailable && !!file && (
+            <p className="warn" style={{ margin: "0 0 12px" }}>
+              Tip: add your course calendar link above for the best results. Without it, SyllaBuddy only uses the
+              syllabus, which can miss exact due dates.
+            </p>
+          )}
           <button className="primary" onClick={extract} disabled={!canRun}>
             {busy
               ? "Reading the syllabus... (up to a minute for big courses)"
