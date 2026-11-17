@@ -1,5 +1,6 @@
 "use client";
 
+import CalendarHelp from "./CalendarHelp";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Course, PlannerItem } from "@/lib/types";
 import { buildIcs } from "@/lib/icsExport";
@@ -8,7 +9,7 @@ import { bestCourseMatch } from "@/lib/courseMatch";
 type Step = "upload" | "review" | "done";
 type Me =
   | { role: "owner"; feedConfigured: boolean }
-  | { role: "guest"; name: string; used: number; limit: number };
+  | { role: "guest"; name: string; used: number; limit: number; canEmail?: boolean };
 type FeedCourse = { key: string; label: string; count: number; samples: string[] };
 
 const SOURCE_LABEL: Record<PlannerItem["source"], string> = {
@@ -64,6 +65,8 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
 
   const [step, setStep] = useState<Step>("upload");
+  const [downloaded, setDownloaded] = useState<{ fileName: string; ics: string; label: string } | null>(null);
+  const [emailState, setEmailState] = useState<"" | "sending" | "sent" | string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [items, setItems] = useState<PlannerItem[]>([]);
@@ -196,7 +199,24 @@ export default function Home() {
   function downloadIcs() {
     const label = plannedCourse?.code || plannedCourse?.name || "";
     const slug = (label || "syllabus").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    download(`${slug}-planner.ics`, buildIcs(chosen(), label));
+    const fileName = `${slug}-planner.ics`;
+    const ics = buildIcs(chosen(), label);
+    download(fileName, ics);
+    setDownloaded({ fileName, ics, label });
+    setEmailState("");
+    setTimeout(() => document.getElementById("add-to-calendar")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
+  async function emailIcs() {
+    if (!downloaded) return;
+    setEmailState("sending");
+    const res = await fetch("/api/email-ics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: downloaded.fileName, ics: downloaded.ics, courseLabel: downloaded.label }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setEmailState(res.ok ? "sent" : data.error || "Couldn't send the email.");
   }
 
   async function send() {
@@ -223,6 +243,8 @@ export default function Home() {
 
   function reset() {
     setStep("upload");
+    setDownloaded(null);
+    setEmailState("");
     setItems([]);
     setWarnings([]);
     setResult(null);
@@ -524,10 +546,37 @@ export default function Home() {
               )}
             </div>
           </div>
-          {!isOwner && (
+          {!isOwner && !downloaded && (
             <p className="small muted">
-              Import the file: Google Calendar (Settings, Import), Apple Calendar (File, Import), or Outlook (Add calendar, Upload from file).
+              After you download, we'll show you exactly how to add it to Google Calendar, Apple Calendar, or Outlook.
             </p>
+          )}
+          {!isOwner && downloaded && (
+            <section className="card stack" id="add-to-calendar">
+              <div>
+                <h2 style={{ marginBottom: 4 }}>Last step: add it to your calendar</h2>
+                <p className="muted" style={{ margin: 0 }}>
+                  <b>{downloaded.fileName}</b> is in your Downloads folder. Pick your calendar app and follow the steps.
+                </p>
+              </div>
+              <CalendarHelp fileName={downloaded.fileName} courseLabel={downloaded.label} canEmail={!!(me.role === "guest" && me.canEmail)} />
+              {me.role === "guest" && me.canEmail && (
+                <div className="email-ics">
+                  <button onClick={emailIcs} disabled={emailState === "sending" || emailState === "sent"}>
+                    {emailState === "sending" ? "Sending..." : emailState === "sent" ? "Sent! Check your email" : "Email this file to me"}
+                  </button>
+                  <span className="small muted">
+                    {emailState && emailState !== "sending" && emailState !== "sent"
+                      ? emailState
+                      : "Handy on a phone, or to do it later. Includes these steps. Check Junk if you don't see it."}
+                  </span>
+                </div>
+              )}
+              <div className="toolbar" style={{ margin: 0 }}>
+                <button onClick={downloadIcs}>Download again</button>
+                <button className="primary" onClick={reset}>Do another course</button>
+              </div>
+            </section>
           )}
         </>
       )}

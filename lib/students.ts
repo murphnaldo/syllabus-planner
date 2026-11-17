@@ -43,6 +43,8 @@ export type Student = {
   sends_today: number;
   last_used_at: string | null;
   note: string | null;
+  ics_sent_day?: string | null;
+  ics_sent_today?: number;
 };
 
 export type StudentWithUsage = Student & { used: number };

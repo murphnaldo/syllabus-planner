@@ -74,3 +74,46 @@ export async function notifyOwnerOfRequest(studentEmail: string): Promise<void> 
     text: `${studentEmail} asked for a SyllaBuddy code.\n\nApprove or decline: ${appUrl()}/admin`,
   });
 }
+
+/** Emails a student their calendar file, with import steps for each calendar app. */
+export async function sendCalendarFile(to: string, fileName: string, ics: string, courseLabel: string): Promise<void> {
+  const what = courseLabel ? `${courseLabel} due dates` : "due dates";
+  const text = [
+    `Here are your ${what} from SyllaBuddy. The calendar file (${fileName}) is attached.`,
+    "",
+    "iPhone or iPad: tap the attachment, tap Add All, pick a calendar, and tap Done.",
+    "Mac: double-click the attachment, pick a calendar, and click OK.",
+    "Google Calendar (on a computer; the phone app can't import): download the attachment, then go to calendar.google.com > Settings > Import & export > Select file from your computer > Import.",
+    "Outlook on the web: Calendar > Add calendar > Upload from file > choose the attachment > Import.",
+    "",
+    "Tip: create a separate calendar for the course first, so you can show, hide, or delete all of its events at once.",
+    "",
+    "SyllaBuddy",
+  ].join("\n");
+
+  const html = `
+  <div style="font-family:Inter,Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#111827">
+    <div style="margin:0 0 18px"><span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;background:#16a34a;color:#fff;font-weight:700;margin-right:8px">S</span><b style="font-size:18px;vertical-align:middle">SyllaBuddy</b></div>
+    <h2 style="margin:0 0 10px">Your ${what}</h2>
+    <p style="margin:0 0 18px">The calendar file <b>${fileName}</b> is attached. Here's how to add it:</p>
+    <p style="margin:0 0 4px"><b>iPhone or iPad</b></p>
+    <p style="margin:0 0 14px;color:#374151">Tap the attachment, tap <b>Add All</b>, pick a calendar, and tap <b>Done</b>.</p>
+    <p style="margin:0 0 4px"><b>Mac</b></p>
+    <p style="margin:0 0 14px;color:#374151">Double-click the attachment, pick a calendar, and click <b>OK</b>.</p>
+    <p style="margin:0 0 4px"><b>Google Calendar</b> (on a computer; the phone app can't import files)</p>
+    <p style="margin:0 0 14px;color:#374151">Download the attachment, open <a href="https://calendar.google.com/calendar/r/settings/export">Google Calendar's Import page</a>, click <b>Select file from your computer</b>, choose the file, and click <b>Import</b>.</p>
+    <p style="margin:0 0 4px"><b>Outlook on the web</b></p>
+    <p style="margin:0 0 18px;color:#374151">Open Calendar, click <b>Add calendar</b>, choose <b>Upload from file</b>, pick the attachment, and click <b>Import</b>.</p>
+    <p style="margin:0;background:#dcfce7;color:#166534;border-radius:10px;padding:12px 14px">Tip: create a separate calendar for the course first, so you can show, hide, or delete all of its events at once.</p>
+  </div>`;
+
+  await transport().sendMail({
+    from: fromAddress(),
+    to,
+    replyTo: contact() || undefined,
+    subject: `Your ${what} from SyllaBuddy`,
+    text,
+    html,
+    attachments: [{ filename: fileName, content: ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }],
+  });
+}

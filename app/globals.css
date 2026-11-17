@@ -158,3 +158,8 @@ input[type="checkbox"] { accent-color: var(--brand); }
 .howto summary { cursor: pointer; color: var(--brand-ink); font-weight: 600; }
 .howto ul { margin: 6px 0 0; padding-left: 18px; }
 .howto li { margin: 3px 0; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.steps-list li { padding-left: 2px; }
+.cal-help a { color: var(--brand-ink); }
+.email-ics { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line); padding-top: 14px; }

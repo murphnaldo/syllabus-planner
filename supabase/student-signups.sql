@@ -59,3 +59,8 @@ $$;
 
 revoke execute on function public.record_student_run(text, text) from public, anon, authenticated;
 grant execute on function public.record_student_run(text, text) to service_role;
+
+-- Added Nov 16: daily counter for "email me this calendar file"
+alter table public.student_access
+  add column if not exists ics_sent_day date,
+  add column if not exists ics_sent_today int not null default 0;

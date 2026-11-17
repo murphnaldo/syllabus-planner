@@ -17,5 +17,6 @@ export async function GET() {
     name: invite.name,
     used: invite.used,
     limit: invite.limit,
+    canEmail: invite.kind === "student",
   });
 }
