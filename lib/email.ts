@@ -16,7 +16,7 @@ function transport() {
   });
 }
 
-const appUrl = () => (process.env.APP_URL || "https://syllabuddyhq.vercel.app").replace(/\/$/, "");
+const appUrl = () => (process.env.APP_URL || "https://syllabuddyapp.vercel.app").replace(/\/$/, "");
 const fromAddress = () => process.env.EMAIL_FROM || `SyllaBuddy <${process.env.SMTP_USER}>`;
 const contact = () => process.env.CONTACT_EMAIL || process.env.SMTP_USER || "";
 

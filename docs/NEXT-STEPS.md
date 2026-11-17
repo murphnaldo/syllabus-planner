@@ -2,7 +2,7 @@
 
 **Launch day: Monday, January 11, 2027** (first day of spring classes at UA). Fall classes end December 6 and finals run December 7 to 13.
 
-Live now at **https://syllabuddyhq.vercel.app** (the old syllabus-planner-nine.vercel.app link still works).
+Live now at **https://syllabuddyapp.vercel.app** (the old syllabus-planner-nine.vercel.app link still works).
 
 ## Done
 - Student sign-up with any .edu email, approval mode, 5 uploads per semester, daily cap
@@ -16,7 +16,7 @@ Live now at **https://syllabuddyhq.vercel.app** (the old syllabus-planner-nine.v
 - [ ] Invite 5 to 10 friends, including at least one at Kent State to try a Canvas calendar link. Fall syllabi are fine; you're testing the app, not the dates.
 - [ ] Message to send:
 
-  > I built a free tool called SyllaBuddy that turns a syllabus into calendar events (Google, Apple, or Outlook) in about a minute. Want to try it before I launch it in January? Go to syllabuddyhq.vercel.app, enter your college email, and I'll approve you. The code email might land in Junk. Tell me anything that's confusing or wrong.
+  > I built a free tool called SyllaBuddy that turns a syllabus into calendar events (Google, Apple, or Outlook) in about a minute. Want to try it before I launch it in January? Go to syllabuddyapp.vercel.app, enter your college email, and I'll approve you. The code email might land in Junk. Tell me anything that's confusing or wrong.
 
 - [ ] Ask each one: Was anything confusing? Were any dates wrong? Would you tell a friend?
 - [ ] After a few real runs, check console.anthropic.com > Usage for the real cost per upload, and update `COST_PER_RUN` in Vercel.
