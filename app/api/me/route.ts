@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { checkInvite } from "@/lib/supabase";
+import { guestStatus } from "@/lib/usage";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +10,8 @@ export async function GET() {
   if (session.role === "owner") {
     return NextResponse.json({ role: "owner", feedConfigured: Boolean(process.env.BRIGHTSPACE_ICS_URL) });
   }
-  const invite = await checkInvite(session.code).catch(() => null);
-  if (!invite) return NextResponse.json({ error: "This invite code is no longer active." }, { status: 401 });
+  const invite = await guestStatus(session.code).catch(() => null);
+  if (!invite) return NextResponse.json({ error: "This code is no longer active." }, { status: 401 });
   return NextResponse.json({
     role: "guest",
     name: invite.name,

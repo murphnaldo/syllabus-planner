@@ -16,6 +16,6 @@ export async function getFeedUrl(_req: Request, provided?: string | null): Promi
   if (!session) return null;
   const url = provided?.trim() || (session.role === "owner" ? process.env.BRIGHTSPACE_ICS_URL ?? "" : "");
   if (!url) return null;
-  if (!isFeedUrl(url)) throw new Error("That doesn't look like a Brightspace calendar feed link.");
+  if (!isFeedUrl(url)) throw new Error("That doesn't look like a Brightspace, Canvas, or Blackboard calendar link.");
   return url;
 }

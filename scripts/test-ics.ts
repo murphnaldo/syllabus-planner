@@ -1,6 +1,7 @@
 // Quick self-check for the Brightspace feed parser, dedupe, and course filter.
 import assert from "node:assert/strict";
 import { parseIcs, filterForCourse } from "../lib/ics.ts";
+import { feedKind } from "../lib/feedUrl.ts";
 import { findDuplicate } from "../lib/dedupe.ts";
 
 const sample = [
@@ -202,3 +203,51 @@ assert.equal(pick("Management Principles & Concepts", "MGMT201-002"), "Mgmt: Pri
 assert.equal(pick("Intro to Applied AI and IS", "ISM250-001"), "Intro to Applied AI and IS 001");
 assert.equal(pick("Organic Chemistry", ""), null, "no match means let the AI decide");
 console.log("Course matching checks passed");
+
+// Canvas feeds: course in [brackets] at the end of the title, course id in the URL
+const canvas = parseIcs([
+  "BEGIN:VCALENDAR",
+  "BEGIN:VEVENT",
+  "SUMMARY:Homework 3: Linked Lists [CS 23001 Computer Science II]",
+  "DTSTART;VALUE=DATE:20261002",
+  "URL;VALUE=URI:https://kent.instructure.com/courses/88123/assignments/554433",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "SUMMARY:Exam 1 [PSYC 11762 General Psychology]",
+  "DTSTART:20261010T035900Z",
+  "URL;VALUE=URI:https://kent.instructure.com/calendar?include_contexts=course_99001&month=10",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "SUMMARY:Quiz 2 [CS 23001 Computer Science II]",
+  "DTSTART;VALUE=DATE:20261009",
+  "URL;VALUE=URI:https://kent.instructure.com/courses/88123/quizzes/12",
+  "END:VEVENT",
+  "END:VCALENDAR",
+].join("\r\n"));
+assert.equal(canvas.length, 3);
+assert.equal(canvas[0].summary, "Homework 3: Linked Lists");
+assert.equal(canvas[0].course, "CS 23001 Computer Science II");
+assert.equal(canvas[0].orgUnit, "canvas-88123");
+assert.equal(canvas[1].orgUnit, "canvas-99001");
+assert.equal(canvas[1].date, "2026-10-09"); // 11:59 PM Eastern
+const canvasCourses = feedCourses(canvas);
+assert.equal(canvasCourses[0].label, "CS 23001 Computer Science II");
+assert.equal(canvasCourses[0].count, 2);
+const cs = filterForCourse(canvas, { name: "Computer Science II", code: "CS 23001" }, "2026-08-24", "2026-12-13");
+assert.equal(cs.matched.length, 2);
+
+// Brightspace titles with brackets keep their LOCATION course and full title
+const d2l = parseIcs(["BEGIN:VCALENDAR","BEGIN:VEVENT","SUMMARY:Lab [optional] - Due","DTSTART;VALUE=DATE:20261001","LOCATION:Chemistry 001","URL:https://uakron.brightspace.com/d2l/le/calendar/4851232/event/1","END:VEVENT","END:VCALENDAR"].join("\r\n"));
+assert.equal(d2l[0].summary, "Lab [optional] - Due");
+assert.equal(d2l[0].course, "Chemistry 001");
+
+// Which links are accepted
+assert.equal(feedKind("https://uakron.brightspace.com/d2l/le/calendar/feed/user/feed.ics?token=abc"), "brightspace");
+assert.equal(feedKind("https://kent.instructure.com/feeds/calendars/user_AbC123xyz.ics"), "canvas");
+assert.equal(feedKind("https://canvas.osu.edu/feeds/calendars/user_9f8e7d.ics"), "canvas");
+assert.equal(feedKind("https://learn.school.edu/webapps/calendar/calendarFeed/1a2b3c/learn.ics"), "blackboard");
+assert.equal(feedKind("http://kent.instructure.com/feeds/calendars/user_abc.ics"), null);
+assert.equal(feedKind("https://example.com/anything.ics"), null);
+assert.equal(feedKind("https://evil.com/feeds/calendars/user_abc.ics/../../admin"), null);
+
+console.log("Canvas and feed-link checks passed");

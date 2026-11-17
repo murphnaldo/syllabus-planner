@@ -13,7 +13,7 @@ type FeedCourse = { key: string; label: string; count: number; samples: string[]
 
 const SOURCE_LABEL: Record<PlannerItem["source"], string> = {
   syllabus: "From syllabus",
-  brightspace: "From Brightspace",
+  brightspace: "From course calendar",
   rule: "Generated from a rule",
 };
 
@@ -115,7 +115,7 @@ export default function Home() {
           if (data.error) setFeedError(data.error);
           setFeedCourses(data.courses ?? []);
         })
-        .catch(() => setFeedError("Could not read the Brightspace feed."));
+        .catch(() => setFeedError("Could not read that calendar link."));
     }, isOwner ? 0 : 600);
     return () => clearTimeout(t);
   }, [me, feedAvailable, feedUrl, isOwner]);
@@ -246,7 +246,7 @@ export default function Home() {
   if (!me) {
     return (
       <main className="shell">
-        <h1>Syllabus Planner</h1>
+        <div className="brand"><div className="mark">S</div><h1>SyllaBuddy</h1></div>
         <p className="muted">{error || "Loading..."}</p>
       </main>
     );
@@ -255,13 +255,20 @@ export default function Home() {
   return (
     <main className="shell">
       <div className="toolbar" style={{ marginBottom: 0 }}>
-        <h1>Syllabus Planner</h1>
-        <button onClick={signOut} className="small">Sign out</button>
+        <div className="brand"><div className="mark">S</div><h1>SyllaBuddy</h1></div>
+        <div className="filters">
+          {isOwner && (
+            <a href="/admin">
+              <button className="small">Students</button>
+            </a>
+          )}
+          <button onClick={signOut} className="small">Sign out</button>
+        </div>
       </div>
       <p className="muted">
         {isOwner
           ? "Syllabus and Brightspace in, Notion Student Planner out."
-          : `Hi ${me.name}. Turn a syllabus into a calendar file you can import anywhere. ${runsLeft} of ${me.limit} runs left this semester.`}
+          : `Hi ${me.name}. Turn a syllabus into a calendar file you can import anywhere. ${runsLeft} of ${me.limit} uploads left this semester.`}
       </p>
 
       {error && <p className="warn">{error}</p>}
@@ -357,15 +364,16 @@ export default function Home() {
 
             {!isOwner && (
               <label>
-                Brightspace calendar link (optional, but catches assignments the syllabus leaves out)
+                Course calendar link (optional, but catches assignments the syllabus leaves out)
                 <input
                   type="text"
                   value={feedUrl}
                   onChange={(e) => setFeedUrl(e.target.value)}
-                  placeholder="Brightspace > Calendar > Subscribe > copy the link"
+                  placeholder="Paste your Brightspace, Canvas, or Blackboard calendar link"
                 />
                 <span className="small muted" style={{ margin: 0, fontWeight: 400 }}>
-                  Saved only on this device. Treat it like a password.
+                  Brightspace: Calendar &gt; Subscribe. Canvas: Calendar &gt; Calendar Feed. Blackboard: Calendar &gt;
+                  Share Calendar. Saved only on this device. Treat it like a password.
                 </span>
               </label>
             )}
@@ -377,13 +385,13 @@ export default function Home() {
                 disabled={!feedAvailable}
                 onChange={(e) => setUseFeed(e.target.checked)}
               />
-              Also pull exact due dates from Brightspace
+              Also pull exact due dates from my course calendar
               {!feedAvailable && <span className="small muted" style={{ margin: 0 }}>(no feed link yet)</span>}
             </label>
 
             {useFeed && feedAvailable && (
               <label>
-                Brightspace course
+                Course in the calendar
                 <select value={feedCourseKey} onChange={(e) => setFeedCourseKey(e.target.value)}>
                   <option value="">Let the AI figure it out</option>
                   {feedCourses.map((f) => (
@@ -410,7 +418,7 @@ export default function Home() {
             {busy
               ? "Reading the syllabus... (up to a minute for big courses)"
               : runsLeft === 0
-                ? "No runs left this semester"
+                ? "No uploads left this semester"
                 : "Find assignments and exams"}
           </button>
         </>
@@ -424,7 +432,7 @@ export default function Home() {
                 <h2 style={{ margin: 0 }}>Review for {plannedCourse?.name}</h2>
                 {stats && (
                   <div className="small muted" style={{ margin: 0 }}>
-                    {items.length} found, {stats.feedEvents} Brightspace events checked
+                    {items.length} found, {stats.feedEvents} calendar events checked
                     {isOwner ? `, ${stats.existing} already in Notion` : ""}
                   </div>
                 )}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { SESSION_COOKIE, createSessionToken, type Session } from "@/lib/auth";
-import { checkInvite } from "@/lib/supabase";
+import { guestStatus } from "@/lib/usage";
 
 /** One box: the owner's password, or a friend's invite code. */
 export async function POST(req: Request) {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     session = { role: "owner" };
   } else if (/^[A-Za-z0-9-]{4,32}$/.test(entered)) {
     try {
-      const invite = await checkInvite(entered);
+      const invite = await guestStatus(entered);
       if (invite) session = { role: "guest", code: entered.toUpperCase(), name: invite.name };
     } catch {
       return NextResponse.json({ error: "Could not check that code right now. Try again." }, { status: 503 });
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   if (!session) {
     await new Promise((r) => setTimeout(r, 600)); // slow down guessing
-    return NextResponse.json({ error: "That password or invite code didn't work." }, { status: 401 });
+    return NextResponse.json({ error: "That code didn't work. Check it against your email, or request it again below." }, { status: 401 });
   }
 
   const res = NextResponse.json({ ok: true, role: session.role });
