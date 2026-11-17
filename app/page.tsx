@@ -398,8 +398,7 @@ export default function Home() {
                   />
                 </label>
                 <span className="small muted" style={{ margin: 0 }}>
-                  Gives exact due dates and catches assignments the syllabus leaves out. You only paste it once: it's
-                  saved on this device. Treat it like a password.
+                  Gives exact due dates and catches assignments the syllabus leaves out.
                 </span>
                 <details className="howto">
                   <summary>Where do I find it?</summary>
