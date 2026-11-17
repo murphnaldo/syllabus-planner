@@ -411,16 +411,19 @@ export default function Home() {
               </div>
             )}
 
-            <label className="inline">
-              <input
-                type="checkbox"
-                checked={useFeed && feedAvailable}
-                disabled={!feedAvailable}
-                onChange={(e) => setUseFeed(e.target.checked)}
-              />
-              Also pull exact due dates from my course calendar
-              {!feedAvailable && <span className="small muted" style={{ margin: 0 }}>(no feed link yet)</span>}
-            </label>
+            {/* Owner only: an on/off switch for the saved Brightspace feed. For students, pasting a link is the switch. */}
+            {isOwner && (
+              <label className="inline">
+                <input
+                  type="checkbox"
+                  checked={useFeed && feedAvailable}
+                  disabled={!feedAvailable}
+                  onChange={(e) => setUseFeed(e.target.checked)}
+                />
+                Also pull exact due dates from my course calendar
+                {!feedAvailable && <span className="small muted" style={{ margin: 0 }}>(no feed link yet)</span>}
+              </label>
+            )}
 
             {useFeed && feedAvailable && (
               <label>
