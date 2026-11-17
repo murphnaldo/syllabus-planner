@@ -33,6 +33,8 @@ export async function sendAccessCode(to: string, code: string, runLimit: number)
     "",
     "Keep this email. If you lose your code, request it again with the same email address and you'll get the same one.",
     "",
+    "Found this in Junk or Spam? Mark it \"Not junk\" (or add this address to your contacts) so future SyllaBuddy emails reach your inbox.",
+    "",
     contact() ? `Questions or need more uploads? Reply to this email or write to ${contact()}.` : "",
     "",
     "SyllaBuddy",
@@ -47,6 +49,7 @@ export async function sendAccessCode(to: string, code: string, runLimit: number)
     <p style="margin:0 0 22px"><a href="${link}" style="background:#111827;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;display:inline-block">Sign in to SyllaBuddy</a></p>
     <p style="margin:0 0 12px">You get <b>${runLimit} syllabus uploads</b> each semester. Each one turns a syllabus into a calendar file for Google Calendar, Apple Calendar, or Outlook.</p>
     <p style="margin:0 0 12px;color:#6b7280">Keep this email. If you lose your code, request it again with the same email and you'll get the same one.</p>
+    <p style="margin:0 0 12px;color:#6b7280">Found this in Junk or Spam? Mark it <b>Not junk</b> (or add this address to your contacts) so future SyllaBuddy emails reach your inbox.</p>
     ${contact() ? `<p style="margin:0;color:#6b7280">Questions or need more uploads? Reply to this email.</p>` : ""}
   </div>`;
 

@@ -25,6 +25,7 @@ export async function GET() {
   return NextResponse.json({
     mode: emailConfigured() ? signupMode() : "closed",
     domains: allowedDomains(),
+    from: process.env.SMTP_USER || "",
   });
 }
 

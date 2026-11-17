@@ -7,6 +7,7 @@ type Mode = "open" | "approval" | "closed";
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode | null>(null);
   const [domains, setDomains] = useState<string[]>([]);
+  const [sender, setSender] = useState("");
 
   // Get-a-code form
   const [email, setEmail] = useState("");
@@ -29,6 +30,7 @@ export default function LoginPage() {
       .then((d) => {
         setMode(d.mode ?? "closed");
         setDomains(d.domains ?? []);
+        setSender(d.from ?? "");
       })
       .catch(() => setMode("closed"));
   }, []);
@@ -100,11 +102,17 @@ export default function LoginPage() {
           <section className="card stack">
             <h2>New here? Get a free code</h2>
             {sent === "sent" ? (
-              <p className="ok">
-                Check your email. We sent your code to {email}. It can take a minute, and it may land in spam.
-              </p>
+              <div className="stack">
+                <p className="ok" style={{ margin: 0 }}>Your code is on its way to {email}.</p>
+                <JunkTip sender={sender} />
+              </div>
             ) : sent === "pending" ? (
-              <p className="ok">Thanks! Your request is in. You'll get your code by email once it's approved.</p>
+              <div className="stack">
+                <p className="ok" style={{ margin: 0 }}>
+                  Thanks! Your request is in. You'll get your code by email once it's approved, usually within a day.
+                </p>
+                <JunkTip sender={sender} />
+              </div>
             ) : (
               <form onSubmit={requestCode} className="stack">
                 <label>
@@ -168,5 +176,18 @@ export default function LoginPage() {
         Your syllabus is only used to build your list. This app doesn't save it. Built by a University of Akron student.
       </p>
     </main>
+  );
+}
+
+/** School email often sends new senders to Junk, so say so plainly. */
+function JunkTip({ sender }: { sender: string }) {
+  return (
+    <div className="junk-tip">
+      <b>Don't see it? Check your Junk or Spam folder.</b>
+      <span>
+        School email often files new senders there. The email comes from <b>SyllaBuddy</b>{sender ? ` (${sender})` : ""}.
+        If you find it in Junk, mark it <b>Not junk</b> so future emails land in your inbox.
+      </span>
+    </div>
   );
 }
