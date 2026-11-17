@@ -404,7 +404,7 @@ export default function Home() {
                   <summary>Where do I find it?</summary>
                   <ul>
                     <li><b>Brightspace:</b> open a course, then open Calendar (under Communicate or Tools in the course menu). Click Settings, check Enable Calendar Feeds, and click Save. A Subscribe button now appears: click it, choose All Calendars and Tasks, and copy the link.</li>
-                    <li><b>Canvas:</b> on a computer (not the phone app), click Calendar in the left menu, click Calendar Feed (bottom right), and copy the link.</li>
+                    <li><b>Canvas:</b> on a computer, click Calendar in the left menu, click Calendar Feed (bottom right), and copy the link.</li>
                     <li><b>Blackboard:</b> click Calendar in the main left menu (not inside a course), click the settings gear, click the three dots next to Calendar Settings, choose Share Calendar, and copy the link.</li>
                   </ul>
                 </details>
