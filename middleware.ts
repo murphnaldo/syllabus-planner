@@ -16,13 +16,21 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(loginUrl(req, pathname));
   }
   if (session.role !== "owner" && OWNER_ONLY.some((p) => pathname.startsWith(p))) {
-    if (!pathname.startsWith("/api/")) return NextResponse.redirect(new URL("/", req.url));
+    // Signed in with a student or friend code: offer the owner sign-in, then come back here
+    if (!pathname.startsWith("/api/")) return NextResponse.redirect(loginUrl(req, pathname));
     return NextResponse.json({ error: "Not available with an access code" }, { status: 403 });
   }
   return NextResponse.next();
+}
+
+/** /login?next=/admin, so signing in returns you to the page you wanted. */
+function loginUrl(req: NextRequest, pathname: string): URL {
+  const url = new URL("/login", req.url);
+  if (pathname !== "/") url.searchParams.set("next", pathname);
+  return url;
 }
 
 export const config = {

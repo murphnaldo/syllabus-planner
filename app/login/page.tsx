@@ -61,7 +61,9 @@ export default function LoginPage() {
     });
     setBusy(false);
     if (res.ok) {
-      window.location.href = "/";
+      // Only follow same-site paths like /admin, never another website
+      const next = new URLSearchParams(window.location.search).get("next") ?? "/";
+      window.location.href = /^\/(?!\/)[\w\-/]*$/.test(next) ? next : "/";
     } else {
       const data = await res.json().catch(() => ({}));
       setError(data.error || "Could not sign in.");
