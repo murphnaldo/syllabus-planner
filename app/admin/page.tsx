@@ -8,6 +8,8 @@ type Student = {
   status: "pending" | "active" | "blocked";
   run_limit: number;
   used: number;
+  with_link: number;
+  link_kinds: string[];
   school: string;
   created_at: string;
   last_used_at: string | null;
@@ -20,6 +22,9 @@ type Data = {
   costPerRun: number;
   students: Student[];
 };
+
+const LMS_NAMES: Record<string, string> = { brightspace: "Brightspace", canvas: "Canvas", blackboard: "Blackboard" };
+const fmtKinds = (k: string[]) => k.map((x) => LMS_NAMES[x] ?? x).join(", ");
 
 const fmtDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
@@ -68,6 +73,7 @@ export default function AdminPage() {
       pending: s.filter((x) => x.status === "pending").length,
       activeThisTerm: s.filter((x) => x.used > 0).length,
       runs,
+      withLink: s.reduce((n, x) => n + x.with_link, 0),
       maxedOut: s.filter((x) => x.status === "active" && x.used >= x.run_limit).length,
       cost: runs * (data?.costPerRun ?? 0),
       schools: new Set(s.map((x) => x.school)).size,
@@ -88,9 +94,9 @@ export default function AdminPage() {
   }, [data]);
 
   function downloadCsv() {
-    const header = "email,school,status,used,limit,joined,last_used";
+    const header = "email,school,status,used,limit,used_with_link,link_systems,joined,last_used";
     const lines = (data?.students ?? []).map((s) =>
-      [s.email, s.school, s.status, s.used, s.run_limit, s.created_at.slice(0, 10), s.last_used_at?.slice(0, 10) ?? ""].join(",")
+      [s.email, s.school, s.status, s.used, s.run_limit, s.with_link, fmtKinds(s.link_kinds).replace(/,/g, ";"), s.created_at.slice(0, 10), s.last_used_at?.slice(0, 10) ?? ""].join(",")
     );
     const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
@@ -127,6 +133,7 @@ export default function AdminPage() {
             <div className="stat"><b>{stats.total}</b><span>students with access</span></div>
             <div className="stat"><b>{stats.activeThisTerm}</b><span>used it this semester</span></div>
             <div className="stat"><b>{stats.runs}</b><span>uploads this semester</span></div>
+            <div className="stat"><b>{stats.withLink}</b><span>used a calendar link</span></div>
             <div className="stat"><b>${stats.cost.toFixed(2)}</b><span>estimated AI cost</span></div>
             <div className="stat"><b>{stats.pending}</b><span>waiting for approval</span></div>
             <div className="stat"><b>{stats.schools}</b><span>{stats.schools === 1 ? "school" : "schools"}</span></div>
@@ -163,6 +170,7 @@ export default function AdminPage() {
                       <th>School</th>
                       <th>Status</th>
                       <th>Uploads</th>
+                      <th>Calendar link</th>
                       <th>Joined</th>
                       <th>Last used</th>
                       <th></th>
@@ -175,6 +183,15 @@ export default function AdminPage() {
                         <td>{s.school}</td>
                         <td><span className={`pill ${s.status}`}>{s.status}</span></td>
                         <td>{s.used} of {s.run_limit}</td>
+                        <td>
+                          {s.with_link > 0 ? (
+                            <>{s.with_link} of {s.used} <span className="muted">· {fmtKinds(s.link_kinds)}</span></>
+                          ) : s.used > 0 ? (
+                            <span className="muted">Not used</span>
+                          ) : (
+                            ""
+                          )}
+                        </td>
                         <td>{fmtDate(s.created_at)}</td>
                         <td>{fmtDate(s.last_used_at)}</td>
                         <td className="actions">

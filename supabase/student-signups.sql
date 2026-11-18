@@ -64,3 +64,26 @@ grant execute on function public.record_student_run(text, text) to service_role;
 alter table public.student_access
   add column if not exists ics_sent_day date,
   add column if not exists ics_sent_today int not null default 0;
+
+-- Added Nov 18: track which uploads used a course calendar link (Brightspace, Canvas, Blackboard).
+-- Additive only: two new columns and one new function. Nothing existing changes.
+alter table public.student_runs
+  add column if not exists with_link  int    not null default 0,
+  add column if not exists link_kinds text[] not null default '{}';
+
+create or replace function public.record_student_link(p_code text, p_term text, p_kind text)
+returns void
+language plpgsql
+set search_path = public
+as $$
+begin
+  update student_runs r
+  set with_link = r.with_link + 1,
+      link_kinds = case when p_kind = any(r.link_kinds) then r.link_kinds else r.link_kinds || p_kind end
+  from student_access a
+  where a.code = upper(p_code) and a.email = r.email and r.term = p_term;
+end;
+$$;
+
+revoke execute on function public.record_student_link(text, text, text) from public, anon, authenticated;
+grant execute on function public.record_student_link(text, text, text) to service_role;

@@ -4,6 +4,7 @@ import { fetchFeed, filterForCourse } from "@/lib/ics";
 import { extractItems } from "@/lib/extract";
 import { findDuplicate } from "@/lib/dedupe";
 import { getFeedUrl, getSession } from "@/lib/session";
+import { feedKind } from "@/lib/feedUrl";
 import { guestStatus, outOfRunsMessage, recordGuestRun } from "@/lib/usage";
 import type { Course, ExistingAssignment, FeedEvent, PlannerItem } from "@/lib/types";
 
@@ -65,12 +66,14 @@ export async function POST(req: Request) {
 
     let feedEvents: FeedEvent[] = [];
     let feedMatchedByCourse = false;
+    let linkKind: string | null = null; // set when a calendar link was read successfully
     const warnings: string[] = [];
     if (useFeed) {
       try {
         const url = await getFeedUrl(req, String(form.get("feedUrl") ?? "") || null);
         if (url) {
           const all = await fetchFeed(url);
+          linkKind = feedKind(url);
           const filtered = filterForCourse(all, course, semesterStart, semesterEnd, feedCourseKey);
           feedEvents = filtered.matched;
           feedMatchedByCourse = filtered.matchedByCourse;
@@ -95,7 +98,7 @@ export async function POST(req: Request) {
     // Count the run only after it succeeded
     let usage: { used: number; limit: number } | null = null;
     if (session.role === "guest") {
-      const used = await recordGuestRun(session.code).catch(() => null);
+      const used = await recordGuestRun(session.code, linkKind).catch(() => null);
       const invite = await guestStatus(session.code).catch(() => null);
       usage = invite ? { used: used ?? invite.used, limit: invite.limit } : null;
     }

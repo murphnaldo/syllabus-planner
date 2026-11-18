@@ -47,7 +47,7 @@ export type Student = {
   ics_sent_today?: number;
 };
 
-export type StudentWithUsage = Student & { used: number };
+export type StudentWithUsage = Student & { used: number; with_link: number; link_kinds: string[] };
 
 /** Student codes look like SB-7K2Q-M4XD so they're easy to tell apart from friend invite codes. (ZIP- was the old prefix.) */
 export const isStudentCode = (code: string) => /^(SB|ZIP)-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(code);
@@ -132,13 +132,25 @@ export async function recordStudentRun(code: string, term = currentTerm()): Prom
   });
 }
 
+/** Notes that a run used a course calendar link. Runs after recordStudentRun. */
+export async function recordStudentLink(code: string, kind: string, term = currentTerm()): Promise<void> {
+  await rest<null>("rpc/record_student_link", {
+    method: "POST",
+    body: JSON.stringify({ p_code: code.toUpperCase(), p_term: term, p_kind: kind }),
+  });
+}
+
 export async function listStudents(term = currentTerm()): Promise<StudentWithUsage[]> {
   const [students, runs] = await Promise.all([
     rest<Student[]>("student_access?select=*&order=created_at.desc"),
-    rest<{ email: string; used: number }[]>(`student_runs?term=eq.${term}&select=email,used`),
+    // select=* so this still works before the with_link/link_kinds columns exist
+    rest<{ email: string; used: number; with_link?: number; link_kinds?: string[] }[]>(`student_runs?term=eq.${term}&select=*`),
   ]);
-  const used = new Map(runs.map((r) => [r.email, r.used]));
-  return students.map((s) => ({ ...s, used: used.get(s.email) ?? 0 }));
+  const byEmail = new Map(runs.map((r) => [r.email, r]));
+  return students.map((s) => {
+    const r = byEmail.get(s.email);
+    return { ...s, used: r?.used ?? 0, with_link: r?.with_link ?? 0, link_kinds: r?.link_kinds ?? [] };
+  });
 }
 
 /** Allowed email domains. "edu" allows any college (kent.edu, uakron.edu, ...); "uakron.edu" allows one school. Subdomains count too. */

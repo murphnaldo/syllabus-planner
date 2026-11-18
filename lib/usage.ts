@@ -2,7 +2,7 @@
 // friends with invite codes (invite_codes table) and students who signed
 // up with their school email (student_access table).
 import { checkInvite, recordRun } from "./supabase";
-import { displayName, getStudentByCode, isStudentCode, recordStudentRun, runsUsed } from "./students";
+import { displayName, getStudentByCode, isStudentCode, recordStudentLink, recordStudentRun, runsUsed } from "./students";
 
 export type GuestStatus = { name: string; used: number; limit: number; kind: "invite" | "student" };
 
@@ -16,8 +16,13 @@ export async function guestStatus(code: string): Promise<GuestStatus | null> {
   return invite ? { ...invite, kind: "invite" } : null;
 }
 
-export async function recordGuestRun(code: string): Promise<number> {
-  return isStudentCode(code) ? recordStudentRun(code) : recordRun(code);
+/** Counts a run. linkKind ("brightspace", "canvas", "blackboard") is set when a calendar link was read. */
+export async function recordGuestRun(code: string, linkKind?: string | null): Promise<number> {
+  if (!isStudentCode(code)) return recordRun(code);
+  const used = await recordStudentRun(code);
+  // Tracking only: never let this fail an upload
+  if (linkKind) await recordStudentLink(code, linkKind).catch(() => null);
+  return used;
 }
 
 export function outOfRunsMessage(limit: number): string {
